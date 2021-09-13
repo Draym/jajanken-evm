@@ -1,0 +1,14 @@
+{
+  "name": "jajankn-evm",
+  "version": "0.1.0",
+  "description": "Jajanken game based SmartContracts",
+  "author": "kevin.andres@epitech.eu",
+  "dependencies": {
+    "babel-polyfill": "6.26.0",
+    "babel-register": "6.26.0",
+    "chai": "4.2.0",
+    "chai-as-promised": "7.1.1",
+    "chai-bignumber": "3.0.0",
+    "truffle": "5.1.39"
+  }
+}

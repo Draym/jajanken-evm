@@ -2,25 +2,22 @@ pragma solidity ^0.7.4;
 
 interface JaJanken {
 
-    function joinGame() external returns (uint);
 
-    function playTurn() external returns ();
+    function joinMatch() external;
 
-    function revealTurn() external returns ();
+    function playMatch(bytes32 _commitment, address _matchId) external;
+
+    function revealMatch(uint8 _action, bytes32 _revealKey, address _matchId) external;
 
     /**
      * Withdraw gains from the Game
      * only available at the end of the Game, do nothing otherwise
      */
-    function withdrawGains() external returns ();
+    function withdrawGains() external;
 
-    /**
-     *
-     */
-    function waitingForPlayers() external view returns (bool);
+    function waitingForOpponentToPlay(address _matchId) external view returns (bool);
+    function waitingForOpponentToReveal(address _matchId) external view returns (bool);
 
-    function skipAfkPlayers() external;
-
-    // game state
-    function getOpponent() external view returns (uint8 nen, uint8 totalCards);
+    function skipAfkDuringPlay(address _matchId) external;
+    function skipAfkDuringReveal(address _matchId) external;
 }

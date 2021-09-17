@@ -2,30 +2,22 @@ pragma solidity ^0.7.4;
 pragma experimental ABIEncoderV2;
 
 import "./JaJanken.sol";
+import "./JaJankenGame.sol";
 
 // SPDX-License-Identifier: GLWTPL
-contract JaJankenRestricted is JaJanken {
-    string constant public name = "JaJanken Restricted Game";
-    address immutable public owner;
-
-    uint32 immutable public nenCost;
+contract JaJankenRestricted is JaJankenGame {
     uint32 immutable public maxNbPlayerPerGame;
-
-
-    event StartGame();
-
-    event EndGame(address[] winners);
-
-    mapping(address => Player) players;
     uint countPlayers;
 
-    receive() external payable {}
+    event StartGame();
+    event EndGame(address[] winners);
 
-    constructor(uint32 _nenCost, uint8 _maxNbGames, uint32 _maxNbPlayerPerGame) {
-        owner = msg.sender;
-        nenCost = _nenCost;
+    constructor(uint32 _nenCost, uint8 _maxNbGames, uint32 _maxNbPlayerPerGame, uint8 _minimumNenToEarn) JaJankenGame("JaJanken Restricted Game", _nenCost, 3, 3, 3, 4) {
         maxNbPlayerPerGame = _maxNbPlayerPerGame;
     }
+
+
+    receive() external payable {}
 
     function joinGame() external {
         if (countPlayers < maxNbPlayerPerGame) {
@@ -45,11 +37,6 @@ contract JaJankenRestricted is JaJanken {
     }
 
     function revealMatch(Technique _action, bytes32 _revealKey, address _matchId) external override(JaJanken) {
-        // TODO
-    }
-
-
-    function withdrawGains() external override(JaJanken) {
         // TODO
     }
 
@@ -76,19 +63,14 @@ contract JaJankenRestricted is JaJanken {
     }
 
     /**
-     * Get your profile stat for the current Game
+     * Withdraw gains from the Game
+     * only available at the end of the Game, do nothing otherwise
      */
-    function getProfile() external view override(JaJanken) returns (Player memory) {
-        return players[msg.sender];
-    }
-
-    /**
-     * Get the player profile stat for the current Game
-     */
-    function getPlayer(address _player) external view override(JaJanken) returns (Opponent memory) {
-        return Opponent({
-        nen : players[_player].nen,
-        techniques : players[_player].guu + players[_player].paa + players[_player].chi
-        });
+    function withdrawGains() external override(JaJanken) {
+        require(gameState == GameState.GameEnded, "The game didn't end yet");
+        require(players[msg.sender].nen >= minimumNenToEarn, "You did not meet the required Nen amount.");
+        require(balance >= players[msg.sender].nen * nenCost, "The Game is out of money.");
+        (bool success,) = msg.sender.call{value : players[msg.sender].nen * nenCost}("Enjoy your rewards!");
+        require(success, "withdraw failed");
     }
 }

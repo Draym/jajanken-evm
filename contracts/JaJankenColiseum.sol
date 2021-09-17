@@ -2,40 +2,27 @@ pragma solidity ^0.7.4;
 pragma experimental ABIEncoderV2;
 
 import "./JaJanken.sol";
+import "./JaJankenGame.sol";
 
 // SPDX-License-Identifier: GLWTPL
-contract JaJankenColiseum is JaJanken {
-    string constant public name = "The JaJanken Coliseum";
-    mapping(Technique => Technique) techniques;
-    address public owner;
-    uint immutable nenCost;
-
-    uint balance;
-    uint fees;
-
-    uint8 constant startNen = 3;
-    uint8 constant startTechniques = 4;
-
-
-    constructor(uint _nenCost) {
-        nenCost = _nenCost;
-        owner = msg.sender;
-        techniques[Technique.Guu] = Technique.Chi;
-        techniques[Technique.Paa] = Technique.Guu;
-        techniques[Technique.Chi] = Technique.Paa;
-    }
-
-    mapping(address => Player) private players;
-    mapping(address => Match) public matches;
+contract JaJankenColiseum is JaJankenGame {
+    /**
+     * nenCost in wei
+     */
+    constructor(uint256 _nenCost) JaJankenGame("The JaJanken Coliseum", _nenCost, 3, 3, 3, 4) {}
 
     address queued;
 
     receive() external payable {
-        if (msg.value >= startNen * nenCost) {
+        if (msg.value >= ((startNen * nenCost) + (startNen * nenCost * entranceFee / 100))) {
             players[msg.sender].nen += startNen;
             players[msg.sender].guu = startTechniques;
             players[msg.sender].paa = startTechniques;
             players[msg.sender].chi = startTechniques;
+            balance += (startNen * nenCost);
+            fees += (startNen * nenCost * entranceFee / 100);
+        } else {
+            sink += msg.value;
         }
     }
 
@@ -149,18 +136,6 @@ contract JaJankenColiseum is JaJanken {
         matches[matchId] = newMatch;
     }
 
-    /**
-     * Withdraw gains from the Game
-     * only available at the end of the Game, do nothing otherwise
-     */
-    function withdrawGains() external override(JaJanken) {
-        require(players[msg.sender].nen >= 3, "Needs at least 3 Nen before leaving the Coliseum.");
-        require(balance >= players[msg.sender].nen * nenCost, "The Coliseum is out of money for now.");
-        (bool success,) = msg.sender.call{value : players[msg.sender].nen * nenCost}("");
-        require(success, "withdraw failed");
-    }
-
-
     function waitingForOpponentToPlay(address _matchId) external view override(JaJanken) returns (bool) {
         Match memory _match = matches[_matchId];
 
@@ -197,14 +172,16 @@ contract JaJankenColiseum is JaJanken {
         }
     }
 
-    function getProfile() external view override(JaJanken) returns (Player memory) {
-        return players[msg.sender];
+
+    /**
+     * Withdraw gains from the Game
+     * only available at the end of the Game, do nothing otherwise
+     */
+    function withdrawGains() external override(JaJanken) {
+        require(players[msg.sender].nen >= minimumNenToEarn, "You did not meet the required Nen for leaving the Coliseum.");
+        require(balance >= players[msg.sender].nen * nenCost, "The Coliseum is out of money for now.");
+        (bool success,) = msg.sender.call{value : players[msg.sender].nen * nenCost}("Enjoy your rewards!");
+        require(success, "withdraw failed");
     }
 
-    function getPlayer(address _player) external view override(JaJanken) returns (Opponent memory) {
-        return Opponent({
-        nen : players[_player].nen,
-        techniques : players[_player].guu + players[_player].paa + players[_player].chi
-        });
-    }
 }

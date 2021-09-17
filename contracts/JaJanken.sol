@@ -48,6 +48,12 @@ interface JaJanken {
         address winner
     );
 
+    /*
+     * Return the required fee in Wei to pay to receive the game starter pack
+     * /!\ depending on implementation, the pack may be given only if the value is enough to buy the entrance ticket
+     */
+    function entranceTicketFee() external view returns(uint256);
+
     /**
      * Join a queue in order to find an opponent to fight against
      * -> Should emit a StartMatch event when an opponent is found

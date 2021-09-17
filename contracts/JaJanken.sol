@@ -55,6 +55,11 @@ interface JaJanken {
     function entranceTicketFee() external view returns(uint256);
 
     /**
+     * Join a game, the caller must pay the required entrance ticket amount in ETH
+     */
+    function joinGame() external payable;
+
+    /**
      * Join a queue in order to find an opponent to fight against
      * -> Should emit a StartMatch event when an opponent is found
      */

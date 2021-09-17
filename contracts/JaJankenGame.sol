@@ -20,11 +20,11 @@ abstract contract JaJankenGame is JaJanken {
     mapping(Technique => Technique) internal techniques;
     GameState internal gameState;
 
-    uint256 internal balance;
-    uint256 internal sink;
-    uint256 internal fees;
+    uint256 public balance;
+    uint256 public sink;
+    uint256 public fees;
 
-    uint256 internal immutable nenCost;
+    uint256 internal immutable ticketCost;
     uint8 internal immutable minimumNenToEarn;
     uint8 internal immutable entranceFee;
     uint8 internal immutable startNen;
@@ -32,7 +32,7 @@ abstract contract JaJankenGame is JaJanken {
 
     constructor(
         string memory _name,
-        uint256 _nenCost,
+        uint256 _ticketCost,
         uint8 _minimumNenToEarn,
         uint8 _entranceFee,
         uint8 _startNen,
@@ -47,12 +47,12 @@ abstract contract JaJankenGame is JaJanken {
         startNen = _startNen;
         startTechniques = _startTechniques;
         minimumNenToEarn = _minimumNenToEarn;
-        nenCost = _nenCost;
+        ticketCost = _ticketCost;
     }
 
 
     function entranceTicketFee() external view override(JaJanken) returns (uint256) {
-        return (startNen * nenCost) + (startNen * nenCost * entranceFee / 100);
+        return ticketCost + (ticketCost * entranceFee / 100);
     }
 
     function getProfile() external view override(JaJanken) returns (Player memory) {

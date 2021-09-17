@@ -12,14 +12,14 @@ contract JaJankenRestricted is JaJankenGame {
     event StartGame();
     event EndGame(address[] winners);
 
-    constructor(uint32 _nenCost, uint8 _maxNbGames, uint32 _maxNbPlayerPerGame, uint8 _minimumNenToEarn) JaJankenGame("JaJanken Restricted Game", _nenCost, 3, 3, 3, 4) {
+    constructor(uint32 _ticketCost, uint8 _maxNbGames, uint32 _maxNbPlayerPerGame, uint8 _minimumNenToEarn) JaJankenGame("JaJanken Restricted Game", _ticketCost, 3, 3, 3, 4) {
         maxNbPlayerPerGame = _maxNbPlayerPerGame;
     }
 
 
     receive() external payable {}
 
-    function joinGame() external {
+    function joinGame() external payable override(JaJanken) {
         if (countPlayers < maxNbPlayerPerGame) {
             ++countPlayers;
         } else if (countPlayers == maxNbPlayerPerGame) {
@@ -69,8 +69,8 @@ contract JaJankenRestricted is JaJankenGame {
     function withdrawGains() external override(JaJanken) {
         require(gameState == GameState.GameEnded, "The game didn't end yet");
         require(players[msg.sender].nen >= minimumNenToEarn, "You did not meet the required Nen amount.");
-        require(balance >= players[msg.sender].nen * nenCost, "The Game is out of money.");
-        (bool success,) = msg.sender.call{value : players[msg.sender].nen * nenCost}("Enjoy your rewards!");
+        require(balance >= players[msg.sender].nen * ticketCost, "The Game is out of money.");
+        (bool success,) = msg.sender.call{value : players[msg.sender].nen * ticketCost}("Enjoy your rewards!");
         require(success, "withdraw failed");
     }
 }

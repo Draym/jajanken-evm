@@ -7,20 +7,23 @@ import "./JaJankenGame.sol";
 // SPDX-License-Identifier: GLWTPL
 contract JaJankenColiseum is JaJankenGame {
     /**
-     * nenCost in wei
+     * _ticketCost in wei
      */
-    constructor(uint256 _nenCost) JaJankenGame("The JaJanken Coliseum", _nenCost, 3, 3, 3, 4) {}
+    constructor(uint256 _ticketCost) JaJankenGame("The JaJanken Coliseum", _ticketCost, 3, 3, 3, 4) {}
 
     address queued;
 
     receive() external payable {
-        if (msg.value >= ((startNen * nenCost) + (startNen * nenCost * entranceFee / 100))) {
+    }
+
+    function joinGame() external payable override(JaJanken) {
+        if (msg.value >= (ticketCost + (ticketCost * entranceFee / 100))) {
             players[msg.sender].nen += startNen;
             players[msg.sender].guu = startTechniques;
             players[msg.sender].paa = startTechniques;
             players[msg.sender].chi = startTechniques;
-            balance += (startNen * nenCost);
-            fees += (startNen * nenCost * entranceFee / 100);
+            balance += ticketCost;
+            fees += ticketCost * entranceFee / 100;
         } else {
             sink += msg.value;
         }
@@ -179,8 +182,8 @@ contract JaJankenColiseum is JaJankenGame {
      */
     function withdrawGains() external override(JaJanken) {
         require(players[msg.sender].nen >= minimumNenToEarn, "You did not meet the required Nen for leaving the Coliseum.");
-        require(balance >= players[msg.sender].nen * nenCost, "The Coliseum is out of money for now.");
-        (bool success,) = msg.sender.call{value : players[msg.sender].nen * nenCost}("Enjoy your rewards!");
+        require(balance >= players[msg.sender].nen * ticketCost, "The Coliseum is out of money for now.");
+        (bool success,) = msg.sender.call{value : players[msg.sender].nen * ticketCost}("Enjoy your rewards!");
         require(success, "withdraw failed");
     }
 

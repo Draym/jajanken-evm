@@ -6,7 +6,7 @@ import "./JaJanken.sol";
 // SPDX-License-Identifier: GLWTPL
 contract JaJankenColiseum is JaJanken {
     string constant public name = "The JaJanken Coliseum";
-    mapping(Technique => Technique) immutable techniques;
+    mapping(Technique => Technique) techniques;
     address public owner;
     uint immutable nenCost;
 

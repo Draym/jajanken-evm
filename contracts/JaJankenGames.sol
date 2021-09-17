@@ -4,8 +4,8 @@ import "./JaJanken.sol";
 
 // SPDX-License-Identifier: GLWTPL
 contract JaJankenGame is JaJanken {
-    string immutable public name;
-    address public owner;
+    string constant public name = "JaJanken Restricted Manager";
+    address immutable public owner;
 
     uint32 immutable public nenCost;
     uint8 immutable public maxNbGames;
@@ -34,23 +34,19 @@ contract JaJankenGame is JaJanken {
 
     receive() external payable {}
 
-    constructor(string memory _name, uint32 _nenCost, uint8 _maxNbGames, uint32 _maxNbPlayerPerGame) {
+    constructor(uint32 _nenCost, uint8 _maxNbGames, uint32 _maxNbPlayerPerGame) {
         owner = msg.sender;
-        name = _name;
         nenCost = _nenCost;
         maxNbGames = _maxNbGames;
         maxNbPlayerPerGame = _maxNbPlayerPerGame;
-        Game memory game;
-        games.push(game);
+        games.push();
     }
 
     function joinGame() external returns (uint) {
         if (games.length == lastGameId) {
-            Game memory game;
-            games.push(game);
+            games.push();
         }
-        Player memory newPlayer;
-        games[lastGameId].players.push(newPlayer);
+        games[lastGameId].players.push();
 
         if (games[lastGameId].players.length == maxNbPlayerPerGame) {
             lastGameId += 1;

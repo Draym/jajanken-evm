@@ -15,15 +15,6 @@ contract JaJankenGame is JaJanken {
         Player[] players;
     }
 
-    struct Turn {
-        uint dummy;
-    }
-
-    struct Player {
-        address playerId;
-        uint8 nen;
-        uint8[3] cards;
-    }
 
     event StartGame(
         uint _gameId

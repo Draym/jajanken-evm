@@ -25,38 +25,6 @@ contract JaJankenColiseum is JaJanken {
         techniques[Technique.Chi] = Technique.Paa;
     }
 
-    struct Player {
-        uint8 nen;
-        uint8 guu;
-        uint8 paa;
-        uint8 chi;
-    }
-
-    struct Opponent {
-        uint8 nen;
-        uint8 techniques;
-    }
-
-    struct Match {
-        address p2;
-        bytes32 p1Hidden;
-        bytes32 p2Hidden;
-        Technique pPlayed;
-        uint256 pTime;
-        uint32 pReveal;
-    }
-
-    event MatchStart(
-        address matchId, // p1
-        address p2
-    );
-
-    event MatchEnd(
-        address p1,
-        address p2,
-        address winner
-    );
-
     mapping(address => Player) private players;
     mapping(address => Match) public matches;
 
@@ -77,20 +45,21 @@ contract JaJankenColiseum is JaJanken {
             queued = msg.sender;
         } else {
             matches[queued].p2 = msg.sender;
-            emit MatchStart(queued, msg.sender);
+            emit MatchStart(queued, queued, msg.sender);
             queued = address(0);
         }
     }
 
     function playMatch(bytes32 _commitment, address _matchId) external override(JaJanken) {
-        Match memory _match = matches[_matchId];
-
         if (msg.sender == _matchId) {
             matches[_matchId].p1Hidden = _commitment;
-        } else if (msg.sender == _match.p2) {
+        } else if (msg.sender == matches[_matchId].p2) {
             matches[_matchId].p2Hidden = _commitment;
         } else {
             revert("You do not belong to this match.");
+        }
+        if (matches[_matchId].pTime != 0) {
+            emit MatchPlayed(_matchId);
         }
         matches[_matchId].pTime = block.timestamp;
     }
@@ -187,7 +156,7 @@ contract JaJankenColiseum is JaJanken {
     function withdrawGains() external override(JaJanken) {
         require(players[msg.sender].nen >= 3, "Needs at least 3 Nen before leaving the Coliseum.");
         require(balance >= players[msg.sender].nen * nenCost, "The Coliseum is out of money for now.");
-        (bool success,) = msg.sender.call{value: players[msg.sender].nen * nenCost}("");
+        (bool success,) = msg.sender.call{value : players[msg.sender].nen * nenCost}("");
         require(success, "withdraw failed");
     }
 

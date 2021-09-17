@@ -1,25 +1,21 @@
 pragma solidity ^0.7.4;
+pragma experimental ABIEncoderV2;
 
 import "./JaJanken.sol";
 
+// SPDX-License-Identifier: GLWTPL
 contract JaJankenColiseum is JaJanken {
     string constant public name = "The JaJanken Coliseum";
-    mapping(uint8 => uint8) immutable techniques;
+    mapping(Technique => Technique) immutable techniques;
     address public owner;
     uint immutable nenCost;
 
     uint balance;
     uint fees;
 
-    uint constant startNen = 3;
-    uint constant startTechniques = 4;
+    uint8 constant startNen = 3;
+    uint8 constant startTechniques = 4;
 
-    enum Technique {
-        None,
-        Guu,
-        Paa,
-        Chi
-    }
 
     constructor(uint _nenCost) {
         nenCost = _nenCost;
@@ -43,10 +39,10 @@ contract JaJankenColiseum is JaJanken {
 
     struct Match {
         address p2;
-        uint8 p1Hidden;
-        uint8 p2Hidden;
+        bytes32 p1Hidden;
+        bytes32 p2Hidden;
         Technique pPlayed;
-        uint32 pTime;
+        uint256 pTime;
         uint32 pReveal;
     }
 
@@ -66,11 +62,7 @@ contract JaJankenColiseum is JaJanken {
 
     address queued;
 
-    constructor() public {
-        owner = msg.sender;
-    }
-
-    receive() public payable {
+    receive() external payable {
         if (msg.value >= startNen * nenCost) {
             players[msg.sender].nen += startNen;
             players[msg.sender].guu = startTechniques;
@@ -79,18 +71,18 @@ contract JaJankenColiseum is JaJanken {
         }
     }
 
-    function joinMatch() external {
+    function joinMatch() external override(JaJanken) {
         require(players[msg.sender].nen > 0, "You do not have enough Nen to start a match.");
         if (queued == address(0)) {
             queued = msg.sender;
         } else {
-            matches[queued] = Match({p2 : msg.sender});
+            matches[queued].p2 = msg.sender;
             emit MatchStart(queued, msg.sender);
             queued = address(0);
         }
     }
 
-    function playMatch(bytes32 _commitment, address _matchId) external {
+    function playMatch(bytes32 _commitment, address _matchId) external override(JaJanken) {
         Match memory _match = matches[_matchId];
 
         if (msg.sender == _matchId) {
@@ -103,20 +95,20 @@ contract JaJankenColiseum is JaJanken {
         matches[_matchId].pTime = block.timestamp;
     }
 
-    function revealMatch(Technique _action, bytes32 _revealKey, address _matchId) external {
+    function revealMatch(Technique _action, bytes32 _revealKey, address _matchId) external override(JaJanken) {
         Match memory _match = matches[_matchId];
 
         if (msg.sender == _matchId)
         {
             require(keccak256(abi.encodePacked(msg.sender, _action, _revealKey)) == _match.p1Hidden, "invalid action");
-            if (_match.pPlayed != 0) {
+            if (_match.pPlayed != Technique.None) {
                 playMatch(_matchId, _match.p2, _action, _match.pPlayed);
             } else {
                 _match.pPlayed = _action;
             }
         } else if (msg.sender == _match.p2) {
             require(keccak256(abi.encodePacked(msg.sender, _action, _revealKey)) == _match.p2Hidden, "invalid action");
-            if (_match.pPlayed != 0) {
+            if (_match.pPlayed != Technique.None) {
                 playMatch(_matchId, _match.p2, _match.pPlayed, _action);
             } else {
                 _match.pPlayed = _action;
@@ -137,6 +129,8 @@ contract JaJankenColiseum is JaJanken {
         useTechnique(_p2, _p2t);
         if (_p1t == _p2t) {
             //draw
+            Match memory newMatch;
+            matches[_p1] = newMatch;
         } else if (techniques[_p1t] == _p2t) {
             endMatch(_p1, _p1);
         } else {
@@ -182,21 +176,23 @@ contract JaJankenColiseum is JaJanken {
             address p2 = matches[matchId].p2;
             --players[p2].nen;
         }
-        matches[matchId] = Match();
+        Match memory newMatch;
+        matches[matchId] = newMatch;
     }
 
     /**
      * Withdraw gains from the Game
      * only available at the end of the Game, do nothing otherwise
      */
-    function withdrawGains() external {
+    function withdrawGains() external override(JaJanken) {
         require(players[msg.sender].nen >= 3, "Needs at least 3 Nen before leaving the Coliseum.");
         require(balance >= players[msg.sender].nen * nenCost, "The Coliseum is out of money for now.");
-        msg.sender.call.value(players[msg.sender].nen * nenCost)("");
+        (bool success,) = msg.sender.call{value: players[msg.sender].nen * nenCost}("");
+        require(success, "withdraw failed");
     }
 
 
-    function waitingForOpponentToPlay(address _matchId) external view returns (bool) {
+    function waitingForOpponentToPlay(address _matchId) external view override(JaJanken) returns (bool) {
         Match memory _match = matches[_matchId];
 
         if (msg.sender != _matchId || msg.sender != _match.p2) {
@@ -208,7 +204,7 @@ contract JaJankenColiseum is JaJanken {
         return (block.timestamp - _match.pTime) / 60 > 2;
     }
 
-    function waitingForOpponentToReveal(address _matchId) external view returns (bool) {
+    function waitingForOpponentToReveal(address _matchId) external view override(JaJanken) returns (bool) {
         Match memory _match = matches[_matchId];
 
         if (msg.sender != _matchId || msg.sender != _match.p2) {
@@ -220,13 +216,13 @@ contract JaJankenColiseum is JaJanken {
         return (block.timestamp - _match.pReveal) / 60 > 2;
     }
 
-    function skipAfkDuringPlay(address _matchId) external {
+    function skipAfkDuringPlay(address _matchId) external override(JaJanken) {
         if (this.waitingForOpponentToPlay(_matchId)) {
             endMatch(msg.sender, _matchId);
         }
     }
 
-    function skipAfkDuringReveal(address _matchId) external {
+    function skipAfkDuringReveal(address _matchId) external override(JaJanken) {
         if (this.waitingForOpponentToReveal(_matchId)) {
             endMatch(msg.sender, _matchId);
         }

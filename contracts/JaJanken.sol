@@ -1,13 +1,20 @@
 pragma solidity ^0.7.4;
 
+// SPDX-License-Identifier: GLWTPL
 interface JaJanken {
 
+    enum Technique {
+        None,
+        Guu,
+        Paa,
+        Chi
+    }
 
     function joinMatch() external;
 
     function playMatch(bytes32 _commitment, address _matchId) external;
 
-    function revealMatch(uint8 _action, bytes32 _revealKey, address _matchId) external;
+    function revealMatch(Technique _action, bytes32 _revealKey, address _matchId) external;
 
     /**
      * Withdraw gains from the Game
@@ -20,4 +27,5 @@ interface JaJanken {
 
     function skipAfkDuringPlay(address _matchId) external;
     function skipAfkDuringReveal(address _matchId) external;
+
 }

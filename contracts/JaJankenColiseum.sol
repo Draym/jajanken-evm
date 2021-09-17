@@ -197,11 +197,11 @@ contract JaJankenColiseum is JaJanken {
         }
     }
 
-    function getProfile() external view returns (Player memory) {
+    function getProfile() external view override(JaJanken) returns (Player memory) {
         return players[msg.sender];
     }
 
-    function getPlayer(address _player) external view returns (Opponent memory) {
+    function getPlayer(address _player) external view override(JaJanken) returns (Opponent memory) {
         return Opponent({
         nen : players[_player].nen,
         techniques : players[_player].guu + players[_player].paa + players[_player].chi

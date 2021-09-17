@@ -1,4 +1,5 @@
 pragma solidity ^0.7.4;
+pragma experimental ABIEncoderV2;
 
 // SPDX-License-Identifier: GLWTPL
 interface JaJanken {
@@ -95,4 +96,13 @@ interface JaJanken {
      */
     function skipAfkDuringReveal(address _matchId) external;
 
+    /**
+     * Get your profile stat for the current Game
+     */
+    function getProfile() external view returns (Player memory);
+
+    /**
+     * Get the player profile stat for the current Game
+     */
+    function getPlayer(address _player) external view returns (Opponent memory);
 }

@@ -33,6 +33,17 @@ contract('JaJankenColiseum', ([owner, player1Address, player2Address]) => {
         console.log("ok: ")
     }
 
+    async function verifyPlayerState(_address, _nen, _cards) {
+        const player = await coliseum.getPlayer(_address)
+        assert.equal(player[0].toString(), _nen.toString())
+        assert.equal(player[1].toString(), _cards.toString())
+    }
+
+    function encodePlay(_play, _key) {
+        const encoded = web3.eth.abi.encodeParameters(['uint256', 'bytes32'],[_play, _key])
+        return web3.utils.sha3(encoded, {encoding: 'hex'})
+    }
+
     before(async () => {
         coliseum = await JaJankenColiseum.new(finney("3"))
         const cost = await coliseum.entranceTicketFee()
@@ -64,15 +75,34 @@ contract('JaJankenColiseum', ([owner, player1Address, player2Address]) => {
             let send2 = await coliseum.joinGame({from: player2Address, value: web3.utils.toWei(entranceCost.toString(), "wei")})
             await verifyBalance(ticketEntrance * 2, 0, ticketFee * 2)
 
-            const player1 = await coliseum.getPlayer(player1Address)
-            const player2 = await coliseum.getPlayer(player2Address)
-            console.log("player1: ", player1)
-            console.log("player2: ", player2)
+            await verifyPlayerState(player1Address, 3, 12)
+            await verifyPlayerState(player2Address, 3, 12)
 
-            assert.equal(player1[0], "3")
-            assert.equal(player1[1], "12")
-            assert.equal(player2[0], "3")
-            assert.equal(player2[1], "12")
+            /** Join Match **/
+            await coliseum.joinMatch({from: player1Address})
+            await coliseum.joinMatch({from: player2Address})
+            let gameAddress = player1Address
+            const match1a = await coliseum.matches(gameAddress)
+            assert.equal(match1a.p2, player2Address)
+
+            /** Commit Play **/
+            let key = web3.utils.fromAscii("abcd")
+            let play1 = await coliseum.encodeAction(player1Address, 1, key)
+            await coliseum.playMatch(play1, gameAddress, {from: player1Address})
+            let play2 = await coliseum.encodeAction(player2Address, 2, key)
+            await coliseum.playMatch(play2, gameAddress, {from: player2Address})
+            const match1b = await coliseum.matches(gameAddress)
+            assert.equal(match1b.p2, player2Address)
+            assert.equal(match1b.p1Hidden, play1)
+            assert.equal(match1b.p2Hidden, play2)
+
+            /** Reveal Play **/
+            await coliseum.revealMatch(1, key, gameAddress, {from: player1Address})
+            await coliseum.revealMatch(2, key, gameAddress, {from: player2Address})
+            const match1c = await coliseum.matches(gameAddress)
+            assert.equal(parseInt(match1c.pPlayed.toString()), 2)
+            await verifyPlayerState(player1Address, 2, 11)
+            await verifyPlayerState(player2Address, 4, 11)
         })
     })
 })

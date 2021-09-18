@@ -48,10 +48,14 @@ contract JaJankenColiseum is JaJankenGame {
         } else {
             revert("You do not belong to this match.");
         }
-        if (matches[_matchId].pTime != 0) {
+        if (matches[_matchId].playTime != 0) {
             emit MatchPlayed(_matchId);
         }
-        matches[_matchId].pTime = block.timestamp;
+        matches[_matchId].playTime = block.timestamp;
+    }
+
+    function encodeAction(address _yourAddress, Technique _action, bytes32 _revealKey) external pure returns (bytes32) {
+        return keccak256(abi.encodePacked(_yourAddress, _action, _revealKey));
     }
 
     function revealMatch(Technique _action, bytes32 _revealKey, address _matchId) external override(JaJanken) {
@@ -59,42 +63,52 @@ contract JaJankenColiseum is JaJankenGame {
 
         if (msg.sender == _matchId)
         {
-            require(keccak256(abi.encodePacked(msg.sender, _action, _revealKey)) == _match.p1Hidden, "invalid action");
+            require(this.encodeAction(msg.sender, _action, _revealKey) == _match.p1Hidden, "invalid action");
             if (_match.pPlayed != Technique.None) {
                 playMatch(_matchId, _match.p2, _action, _match.pPlayed);
             } else {
-                _match.pPlayed = _action;
+                matches[_matchId].pPlayed = _action;
             }
         } else if (msg.sender == _match.p2) {
-            require(keccak256(abi.encodePacked(msg.sender, _action, _revealKey)) == _match.p2Hidden, "invalid action");
+            require(this.encodeAction(msg.sender, _action, _revealKey) == _match.p2Hidden, "invalid action");
             if (_match.pPlayed != Technique.None) {
                 playMatch(_matchId, _match.p2, _match.pPlayed, _action);
             } else {
-                _match.pPlayed = _action;
+                matches[_matchId].pPlayed = _action;
             }
         } else {
             revert("You do not belong to this match.");
         }
+        matches[_matchId].revealTime = block.timestamp;
     }
 
     function playMatch(address _p1, address _p2, Technique _p1t, Technique _p2t) private {
         if (!canUseTechnique(_p1, _p1t)) {
-            endMatch(_p2, _p1);
+            ++players[_p2].nen;
+            --players[_p1].nen;
+            emit MatchEnd(_p1, _p2, _p2);
         }
         if (!canUseTechnique(_p2, _p2t)) {
-            endMatch(_p1, _p1);
+            ++players[_p1].nen;
+            --players[_p2].nen;
+            emit MatchEnd(_p1, _p2, _p1);
         }
         useTechnique(_p1, _p1t);
         useTechnique(_p2, _p2t);
         if (_p1t == _p2t) {
             //draw
-            Match memory newMatch;
-            matches[_p1] = newMatch;
+            emit MatchEnd(_p1, _p2, _p1);
         } else if (techniques[_p1t] == _p2t) {
-            endMatch(_p1, _p1);
+            ++players[_p1].nen;
+            --players[_p2].nen;
+            emit MatchEnd(_p1, _p2, _p1);
         } else {
-            endMatch(_p2, _p1);
+            ++players[_p2].nen;
+            --players[_p1].nen;
+            emit MatchEnd(_p1, _p2, _p2);
         }
+        Match memory newMatch;
+        matches[_p1] = newMatch;
     }
 
     function canUseTechnique(address _p, Technique _technique) private view returns (bool) {
@@ -127,18 +141,6 @@ contract JaJankenColiseum is JaJankenGame {
         }
     }
 
-    function endMatch(address winner, address matchId) private {
-        ++players[winner].nen;
-        if (winner != matchId) {
-            --players[matchId].nen;
-        } else {
-            address p2 = matches[matchId].p2;
-            --players[p2].nen;
-        }
-        Match memory newMatch;
-        matches[matchId] = newMatch;
-    }
-
     function waitingForOpponentToPlay(address _matchId) external view override(JaJanken) returns (bool) {
         Match memory _match = matches[_matchId];
 
@@ -148,7 +150,7 @@ contract JaJankenColiseum is JaJankenGame {
         if (_match.p1Hidden != 0 && _match.p2Hidden != 0) {
             revert("Both players already played.");
         }
-        return (block.timestamp - _match.pTime) / 60 > 2;
+        return (block.timestamp - _match.playTime) / 60 > 2;
     }
 
     function waitingForOpponentToReveal(address _matchId) external view override(JaJanken) returns (bool) {
@@ -160,18 +162,34 @@ contract JaJankenColiseum is JaJankenGame {
         if (_match.p1Hidden == 0 || _match.p2Hidden == 0) {
             revert("One player didn't play yet.");
         }
-        return (block.timestamp - _match.pReveal) / 60 > 2;
+        return (block.timestamp - _match.revealTime) / 60 > 2;
     }
 
     function skipAfkDuringPlay(address _matchId) external override(JaJanken) {
         if (this.waitingForOpponentToPlay(_matchId)) {
-            endMatch(msg.sender, _matchId);
+            if (msg.sender == _matchId) {
+                ++players[msg.sender].nen;
+                --players[matches[_matchId].p2].nen;
+                emit MatchEnd(msg.sender, matches[_matchId].p2, msg.sender);
+            } else {
+                ++players[msg.sender].nen;
+                --players[_matchId].nen;
+                emit MatchEnd(msg.sender, _matchId, msg.sender);
+            }
         }
     }
 
     function skipAfkDuringReveal(address _matchId) external override(JaJanken) {
         if (this.waitingForOpponentToReveal(_matchId)) {
-            endMatch(msg.sender, _matchId);
+            if (msg.sender == _matchId) {
+                ++players[msg.sender].nen;
+                --players[matches[_matchId].p2].nen;
+                emit MatchEnd(msg.sender, matches[_matchId].p2, msg.sender);
+            } else {
+                ++players[msg.sender].nen;
+                --players[_matchId].nen;
+                emit MatchEnd(msg.sender, _matchId, msg.sender);
+            }
         }
     }
 
@@ -182,6 +200,7 @@ contract JaJankenColiseum is JaJankenGame {
      */
     function withdrawGains() external override(JaJanken) {
         require(players[msg.sender].nen >= minimumNenToEarn, "You did not meet the required Nen for leaving the Coliseum.");
+        require(players[msg.sender].paa != 0 || players[msg.sender].chi != 0 || players[msg.sender].guu != 0, "You did not play all your cards yet.");
         require(balance >= players[msg.sender].nen * ticketCost, "The Coliseum is out of money for now.");
         (bool success,) = msg.sender.call{value : players[msg.sender].nen * ticketCost}("Enjoy your rewards!");
         require(success, "withdraw failed");

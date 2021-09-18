@@ -28,8 +28,8 @@ interface JaJanken {
         bytes32 p1Hidden;
         bytes32 p2Hidden;
         Technique pPlayed;
-        uint256 pTime;
-        uint32 pReveal;
+        uint256 playTime;
+        uint256 revealTime;
     }
 
     event MatchStart(

@@ -11,14 +11,20 @@ contract JaJankenColiseum is JaJankenGame {
      */
     constructor(uint256 _ticketCost) JaJankenGame("The JaJanken Coliseum", _ticketCost, 3, 3, 3, 4) {}
 
-    address queued;
+    address public queued;
 
     receive() external payable {
     }
 
     function joinGame() external payable override(JaJanken) {
         if (msg.value >= (ticketCost + (ticketCost * entranceFee / 100))) {
+            if (players[msg.sender].nen == 0) {
+                ++alivePlayers;
+            }
             players[msg.sender].nen += startNen;
+            totalGuu += (startTechniques - players[msg.sender].guu);
+            totalPaa += (startTechniques - players[msg.sender].paa);
+            totalChi += (startTechniques - players[msg.sender].chi);
             players[msg.sender].guu = startTechniques;
             players[msg.sender].paa = startTechniques;
             players[msg.sender].chi = startTechniques;
@@ -30,11 +36,14 @@ contract JaJankenColiseum is JaJankenGame {
     }
 
     function joinMatch() external override(JaJanken) {
+        require(queued != msg.sender, "You are already in the queue.");
+        require(players[msg.sender].inMatch == 0, "You are already in a match.");
         require(players[msg.sender].nen > 0, "You do not have enough Nen to start a match.");
         if (queued == address(0)) {
             queued = msg.sender;
         } else {
             matches[queued].p2 = msg.sender;
+            players[msg.sender].inMatch = 1;
             emit MatchStart(queued, queued, msg.sender);
             queued = address(0);
         }
@@ -65,80 +74,59 @@ contract JaJankenColiseum is JaJankenGame {
         {
             require(this.encodeAction(msg.sender, _action, _revealKey) == _match.p1Hidden, "invalid action");
             if (_match.pPlayed != Technique.None) {
-                playMatch(_matchId, _match.p2, _action, _match.pPlayed);
+                executeMatch(_matchId, _match.p2, _action, _match.pPlayed);
             } else {
                 matches[_matchId].pPlayed = _action;
+                matches[_matchId].revealTime = block.timestamp;
             }
         } else if (msg.sender == _match.p2) {
             require(this.encodeAction(msg.sender, _action, _revealKey) == _match.p2Hidden, "invalid action");
             if (_match.pPlayed != Technique.None) {
-                playMatch(_matchId, _match.p2, _match.pPlayed, _action);
+                executeMatch(_matchId, _match.p2, _match.pPlayed, _action);
             } else {
                 matches[_matchId].pPlayed = _action;
+                matches[_matchId].revealTime = block.timestamp;
             }
         } else {
             revert("You do not belong to this match.");
         }
-        matches[_matchId].revealTime = block.timestamp;
     }
 
-    function playMatch(address _p1, address _p2, Technique _p1t, Technique _p2t) private {
+    function executeMatch(address _p1, address _p2, Technique _p1t, Technique _p2t) internal {
         if (!canUseTechnique(_p1, _p1t)) {
             ++players[_p2].nen;
             --players[_p1].nen;
+            useTechnique(_p2, _p2t);
             emit MatchEnd(_p1, _p2, _p2);
         }
-        if (!canUseTechnique(_p2, _p2t)) {
+        else if (!canUseTechnique(_p2, _p2t)) {
             ++players[_p1].nen;
             --players[_p2].nen;
-            emit MatchEnd(_p1, _p2, _p1);
-        }
-        useTechnique(_p1, _p1t);
-        useTechnique(_p2, _p2t);
-        if (_p1t == _p2t) {
-            //draw
-            emit MatchEnd(_p1, _p2, _p1);
-        } else if (techniques[_p1t] == _p2t) {
-            ++players[_p1].nen;
-            --players[_p2].nen;
+            useTechnique(_p1, _p1t);
             emit MatchEnd(_p1, _p2, _p1);
         } else {
-            ++players[_p2].nen;
-            --players[_p1].nen;
-            emit MatchEnd(_p1, _p2, _p2);
+            if (_p1t == _p2t) {
+                //draw
+                emit MatchEnd(_p1, _p2, _p1);
+            } else if (techniques[_p1t] == _p2t) {
+                ++players[_p1].nen;
+                --players[_p2].nen;
+                emit MatchEnd(_p1, _p2, _p1);
+            } else {
+                ++players[_p2].nen;
+                --players[_p1].nen;
+                emit MatchEnd(_p1, _p2, _p2);
+            }
+            useTechnique(_p1, _p1t);
+            useTechnique(_p2, _p2t);
         }
+        if (players[_p1].nen == 0 || players[_p2].nen == 0) {
+            --alivePlayers;
+        }
+        players[_p1].inMatch = 0;
+        players[_p2].inMatch = 0;
         Match memory newMatch;
         matches[_p1] = newMatch;
-    }
-
-    function canUseTechnique(address _p, Technique _technique) private view returns (bool) {
-        if (_technique == Technique.Guu) {
-            return players[_p].guu > 0;
-        }
-        else if (_technique == Technique.Paa) {
-            return players[_p].paa > 0;
-        }
-        else if (_technique == Technique.Chi) {
-            return players[_p].chi > 0;
-        }
-        else {
-            revert("Wrong technique");
-        }
-    }
-
-    function useTechnique(address _p, Technique _technique) private {
-        if (_technique == Technique.Guu) {
-            --players[_p].guu;
-        }
-        else if (_technique == Technique.Paa) {
-            --players[_p].paa;
-        }
-        else if (_technique == Technique.Chi) {
-            --players[_p].chi;
-        }
-        else {
-            revert("Wrong technique");
-        }
     }
 
     function waitingForOpponentToPlay(address _matchId) external view override(JaJanken) returns (bool) {

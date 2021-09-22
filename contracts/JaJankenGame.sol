@@ -24,6 +24,11 @@ abstract contract JaJankenGame is JaJanken {
     uint256 public sink;
     uint256 public fees;
 
+    uint256 public alivePlayers;
+    uint256 public totalGuu;
+    uint256 public totalPaa;
+    uint256 public totalChi;
+
     uint256 internal immutable ticketCost;
     uint8 internal immutable minimumNenToEarn;
     uint8 internal immutable entranceFee;
@@ -66,6 +71,22 @@ abstract contract JaJankenGame is JaJanken {
         });
     }
 
+    function getTotalPlayers() external view override(JaJanken) returns (uint) {
+        return alivePlayers;
+    }
+
+    function getTotalGuu() external view override(JaJanken) returns (uint) {
+        return totalGuu;
+    }
+
+    function getTotalPaa() external view override(JaJanken) returns (uint) {
+        return totalPaa;
+    }
+
+    function getTotalChi() external view override(JaJanken) returns (uint) {
+        return totalChi;
+    }
+
     modifier onlyOwner {
         require(msg.sender == owner, "Only owner can call this function.");
         _;
@@ -87,5 +108,38 @@ abstract contract JaJankenGame is JaJanken {
     function cleanupSink() external onlyOwner {
         (bool success,) = msg.sender.call{value : sink}("cleanup sink");
         require(success, "withdraw failed");
+    }
+
+    function canUseTechnique(address _p, Technique _technique) internal view returns (bool) {
+        if (_technique == Technique.Guu) {
+            return players[_p].guu > 0;
+        }
+        else if (_technique == Technique.Paa) {
+            return players[_p].paa > 0;
+        }
+        else if (_technique == Technique.Chi) {
+            return players[_p].chi > 0;
+        }
+        else {
+            revert("Wrong technique");
+        }
+    }
+
+    function useTechnique(address _p, Technique _technique) internal {
+        if (_technique == Technique.Guu) {
+            --players[_p].guu;
+            --totalGuu;
+        }
+        else if (_technique == Technique.Paa) {
+            --players[_p].paa;
+            --totalPaa;
+        }
+        else if (_technique == Technique.Chi) {
+            --players[_p].chi;
+            --totalChi;
+        }
+        else {
+            revert("Wrong technique");
+        }
     }
 }

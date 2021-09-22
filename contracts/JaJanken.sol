@@ -12,14 +12,15 @@ interface JaJanken {
     }
 
     struct Player {
-        uint8 nen;
+        uint8 inMatch;
         uint8 guu;
         uint8 paa;
         uint8 chi;
+        uint32 nen;
     }
 
     struct Opponent {
-        uint8 nen;
+        uint32 nen;
         uint8 techniques;
     }
 
@@ -116,4 +117,21 @@ interface JaJanken {
      * Get the player profile stat for the current Game
      */
     function getPlayer(address _player) external view returns (Opponent memory);
+
+    /**
+     * Get the number of player alive in the game
+     */
+    function getTotalPlayers() external view returns (uint);
+    /**
+     * Get the number of Guu from alive players
+     */
+    function getTotalGuu() external view returns (uint);
+    /**
+     * Get the number of Paa from alive players
+     */
+    function getTotalPaa() external view returns (uint);
+    /**
+     * Get the number of Chi from alive players
+     */
+    function getTotalChi() external view returns (uint);
 }

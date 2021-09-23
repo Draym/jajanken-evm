@@ -3,11 +3,9 @@ module.exports = class TestVerify {
         const balance = await setup.game.balance();
         const sink = await setup.game.sink();
         const fees = await setup.game.fees();
-        console.log("balance: ", balance);
         assert.equal(balance.toString(), _balance.toString(), "incorrect balance");
         assert.equal(sink.toString(), _sink.toString(), "incorrect sing");
         assert.equal(fees.toString(), _fees.toString(), "incorrect fees");
-        console.log("ok: ");
     }
 
     static async verifyPlayerState(setup, _address, _nen, _cards) {

@@ -19,11 +19,15 @@ contract('JaJankenColiseum', ([owner, player1Address, player2Address]) => {
         return web3.utils.sha3(encoded, {encoding: 'hex'})
     }
 
-    before(async () => {
+    beforeEach(async () => {
+        console.log("--------- NEW CONTRACT --------")
         coliseum = await JaJankenColiseum.new(Utils.finney("3"))
         const cost = await coliseum.entranceTicketFee()
         setup = GameSetup.build(coliseum, parseInt(cost.toString()))
     })
+
+    afterEach(async () => {
+    });
 
     describe('JaJankenColiseum deployment', async () => {
         it('coliseum setup', async () => {
@@ -39,62 +43,45 @@ contract('JaJankenColiseum', ([owner, player1Address, player2Address]) => {
         })
     })
 
-    describe('Players Join Game', async () => {
-        it('players join game', async () => {
-            await PlayerAction.joinGame(setup, player1Address, 1)
-            await PlayerAction.joinGame(setup, player2Address, 2)
-        })
-    })
+    describe('Players can Join', async () => {
+            it('players join game', async () => {
+                await PlayerAction.joinGame(setup, player1Address, 1)
+                await PlayerAction.joinGame(setup, player2Address, 2)
+            })
+            it('players join match', async () => {
+                await PlayerAction.joinGame(setup, player1Address, 1)
+                await PlayerAction.joinGame(setup, player2Address, 2)
+                await PlayerAction.joinMatch(setup, player1Address, 1)
+                await PlayerAction.joinMatch(setup, player2Address, 2)
+                const match = await coliseum.matches(player1Address)
+                assert.equal(match.p2, player2Address)
+            })
+        }
+    )
 
-    describe('Players Join Match', async () => {
-        it('players join game', async () => {
+    describe('Players can Play', async () => {
+        beforeEach(async () => {
+            console.log("--# new Game #--")
             await PlayerAction.joinGame(setup, player1Address, 1)
             await PlayerAction.joinGame(setup, player2Address, 2)
-        })
-        it('players join match', async () => {
             await PlayerAction.joinMatch(setup, player1Address, 1)
             await PlayerAction.joinMatch(setup, player2Address, 2)
             const match = await coliseum.matches(player1Address)
             assert.equal(match.p2, player2Address)
         })
-    })
 
-
-    describe("Players Cant Join Match", async () => {
-
-        it("players can't join match", async () => {
-        })
-    })
-
-    describe('Players Play Turns', async () => {
-        it('players join game', async () => {
-            await PlayerAction.joinGame(setup, player1Address, 1)
-            await PlayerAction.joinGame(setup, player2Address, 2)
-        })
-        it('players join match', async () => {
-            await PlayerAction.joinMatch(setup, player1Address, 1)
-            await PlayerAction.joinMatch(setup, player2Address, 2)
-            const match = await coliseum.matches(player1Address)
-            assert.equal(match.p2, player2Address)
-        })
-        // TODO need to check how Test are executed, before is run only once per contract or not?
         it('players play first turn', async () => {
-
+            const matchId = player1Address
             /** Commit Play **/
-            await PlayerAction.commitPlay(setup, 1, player1Address, true)
-            await PlayerAction.commitPlay(setup, 2, player2Address, false)
-            const match1b = await coliseum.matches(gameAddress)
+            await PlayerAction.commitPlay(setup, 1, player1Address, matchId, true)
+            await PlayerAction.commitPlay(setup, 2, player2Address, matchId, false)
+            const match1b = await coliseum.matches(matchId)
             assert.equal(match1b.p2, player2Address)
-            assert.equal(match1b.p1Hidden, play1)
-            assert.equal(match1b.p2Hidden, play2)
 
             /** Reveal Play **/
-            await coliseum.revealMatch(1, key, gameAddress, {from: player1Address})
-            const match1c = await coliseum.matches(gameAddress)
-            assert.equal(parseInt(match1c.pPlayed.toString()), 1, "P1 wrong card played")
-            await coliseum.revealMatch(2, key, gameAddress, {from: player2Address})
-            const match1d = await coliseum.matches(gameAddress)
-            assert.equal(match1d.p2, Utils.nullAddress())
+            await PlayerAction.revealPlay(setup, 1, player1Address, matchId, true)
+            await PlayerAction.revealPlay(setup, 2, player2Address, matchId, false)
+
             await TestVerify.verifyPlayerState(setup, player1Address, 2, 11)
             await TestVerify.verifyPlayerState(setup, player2Address, 4, 11)
         })

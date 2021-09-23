@@ -21,19 +21,25 @@ module.exports = class PlayerAction {
         }
     }
 
-    static async commitPlay(setup, action, _playerAddress, isFirst) {
+    static async commitPlay(setup, action, _playerAddress, _matchId, isFirst) {
         let play = await setup.game.encodeAction(_playerAddress, action, setup.key)
-        await setup.game.playMatch(play, setup.game.address, {from: _playerAddress})
-        const match = await setup.game.matches(setup.game.address)
+        await setup.game.playMatch(play, _matchId, {from: _playerAddress})
+        const match = await setup.game.matches(_matchId)
         if (isFirst) {
             assert.equal(match.p1Hidden, play)
         } else {
             assert.equal(match.p2Hidden, play)
-            assert.equal(match.p2, _playerAddress)
         }
     }
 
-    static async revealPlay(setup, _playerAddress) {
-        await setup.game.joinMatch({from: _playerAddress})
+    static async revealPlay(setup, action, _playerAddress, _matchId, isFirst) {
+        await setup.game.revealMatch(action, setup.key, _matchId, {from: _playerAddress})
+        const match = await setup.game.matches(_matchId)
+        if (isFirst) {
+            assert.equal(match.pPlayed, action)
+        } else {
+            assert.equal(match.pPlayed, 0)
+            assert.equal(match.p2, Utils.nullAddress())
+        }
     }
 }

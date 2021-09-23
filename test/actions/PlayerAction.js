@@ -1,5 +1,5 @@
-const TestVerify = require("./TestVerify.js");
-const Utils = require("./Utils.js");
+const TestVerify = require("../verify/TestVerify.js");
+const Utils = require("../Utils.js");
 
 module.exports = class PlayerAction {
 

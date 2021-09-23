@@ -1,4 +1,4 @@
-const Utils = require("./Utils.js");
+const Utils = require("../Utils.js");
 
 module.exports = class GameSetup {
     static build(_game, _entranceCost) {

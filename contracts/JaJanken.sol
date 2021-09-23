@@ -49,11 +49,16 @@ interface JaJanken {
         address winner
     );
 
+    event WithdrawRewards(
+        address player,
+        uint256 amount
+    );
+
     /*
      * Return the required fee in Wei to pay to receive the game starter pack
      * /!\ depending on implementation, the pack may be given only if the value is enough to buy the entrance ticket
      */
-    function entranceTicketFee() external view returns(uint256);
+    function entranceTicketFee() external view returns (uint256);
 
     /**
      * Join a game, the caller must pay the required entrance ticket amount in ETH

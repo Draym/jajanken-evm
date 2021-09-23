@@ -1,5 +1,5 @@
 module.exports = class TestVerify {
-    static async verifyBalance(setup, _balance, _sink, _fees) {
+    static async verifyGameBalance(setup, _balance, _sink, _fees) {
         const balance = await setup.game.balance();
         const sink = await setup.game.sink();
         const fees = await setup.game.fees();

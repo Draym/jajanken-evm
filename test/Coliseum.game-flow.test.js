@@ -22,7 +22,7 @@ contract('JaJankenColiseum', ([owner, player1Address, player2Address]) => {
     }
 
     beforeEach(async () => {
-        console.log("--------- NEW CONTRACT --------")
+        console.log("- NEW CONTRACT -")
         coliseum = await JaJankenColiseum.new(Utils.finney("3"))
         const cost = await coliseum.entranceTicketFee()
         setup = GameSetup.build(coliseum, parseInt(cost.toString()))
@@ -106,6 +106,50 @@ contract('JaJankenColiseum', ([owner, player1Address, player2Address]) => {
 
             /** P1 GameOver **/
             await truffleAssert.reverts(PlayerAction.joinMatch(setup, player1Address, 1), "You do not have enough Nen to start a match.")
+        })
+    })
+
+    describe('Player Withdraw condition', async () => {
+        beforeEach(async () => {
+            console.log("--# new Game #--")
+            await PlayerAction.joinGame(setup, player1Address, 1)
+            await PlayerAction.joinGame(setup, player2Address, 2)
+        })
+        it("can't leave if less than 3Nen", async () => {
+            await GameAction.playTurn(setup, player1Address, 1, player2Address, 2)
+            await truffleAssert.reverts(setup.game.withdrawGains({from: player1Address}), "You did not meet the required Nen for leaving the Coliseum.")
+        })
+        it("can't leave if have cards", async () => {
+            await truffleAssert.reverts(setup.game.withdrawGains({from: player1Address}), "You did not play all your cards yet.")
+        })
+        it("can withdraw", async () => {
+            await GameAction.playTurn(setup, player1Address, 1, player2Address, 2)
+            await GameAction.playTurn(setup, player1Address, 1, player2Address, 2)
+            await GameAction.playTurn(setup, player1Address, 2, player2Address, 1)
+            await GameAction.playTurn(setup, player1Address, 2, player2Address, 1)
+            await GameAction.playTurn(setup, player1Address, 3, player2Address, 1)
+            await GameAction.playTurn(setup, player1Address, 3, player2Address, 1)
+            await GameAction.playTurn(setup, player1Address, 1, player2Address, 3)
+            await GameAction.playTurn(setup, player1Address, 1, player2Address, 3)
+            await GameAction.playTurn(setup, player1Address, 2, player2Address, 3)
+            await GameAction.playTurn(setup, player1Address, 2, player2Address, 3)
+            await GameAction.playTurn(setup, player1Address, 3, player2Address, 2)
+            await GameAction.playTurn(setup, player1Address, 3, player2Address, 2)
+
+            await TestVerify.verifyPlayerState(setup, player1Address, 3, 0)
+            await TestVerify.verifyPlayerState(setup, player2Address, 3, 0)
+
+            const balance = await setup.game.balance();
+            const fee = await setup.game.entranceTicketFee();
+            console.log("game balance: ", balance.toString())
+            console.log("game fee: ", fee.toString())
+
+            let pastBalance = await web3.eth.getBalance(player1Address);
+            await setup.game.withdrawGains({from: player1Address})
+            let actualBalance = await web3.eth.getBalance(player1Address);
+            // TODO can check exact balance by calculating gaz cost
+            // TODO can check event emitted
+            assert.isAbove(parseInt(actualBalance), parseInt(pastBalance), "Balance incorrect!");
         })
     })
 })

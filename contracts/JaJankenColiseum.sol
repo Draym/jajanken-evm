@@ -192,6 +192,7 @@ contract JaJankenColiseum is JaJankenGame {
         require(balance >= players[msg.sender].nen * (ticketCost / startNen), "The Coliseum is out of money for now.");
         (bool success,) = msg.sender.call{value : players[msg.sender].nen * (ticketCost / startNen)}("Enjoy your rewards!");
         require(success, "withdraw failed");
+        emit WithdrawRewards({player : msg.sender, amount : players[msg.sender].nen * (ticketCost / startNen)});
     }
 
 }

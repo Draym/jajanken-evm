@@ -5,7 +5,7 @@ module.exports = class PlayerAction {
 
     static async joinGame(setup, _playerAddress, _nbPlayers) {
         await setup.game.joinGame({from: _playerAddress, value: web3.utils.toWei(setup.entranceCost.toString(), "wei")})
-        await TestVerify.verifyBalance(setup, setup.ticketEntrance * _nbPlayers, 0, setup.ticketFee * _nbPlayers)
+        await TestVerify.verifyGameBalance(setup, setup.ticketEntrance * _nbPlayers, 0, setup.ticketFee * _nbPlayers)
         await TestVerify.verifyPlayerState(setup, _playerAddress, 3, 12)
         const nbPlayers = await setup.game.getTotalPlayers();
         assert.equal(nbPlayers, _nbPlayers)

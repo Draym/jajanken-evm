@@ -188,9 +188,9 @@ contract JaJankenColiseum is JaJankenGame {
      */
     function withdrawGains() external override(JaJanken) {
         require(players[msg.sender].nen >= minimumNenToEarn, "You did not meet the required Nen for leaving the Coliseum.");
-        require(players[msg.sender].paa != 0 || players[msg.sender].chi != 0 || players[msg.sender].guu != 0, "You did not play all your cards yet.");
-        require(balance >= players[msg.sender].nen * ticketCost, "The Coliseum is out of money for now.");
-        (bool success,) = msg.sender.call{value : players[msg.sender].nen * ticketCost}("Enjoy your rewards!");
+        require(players[msg.sender].paa == 0 && players[msg.sender].chi == 0 && players[msg.sender].guu == 0, "You did not play all your cards yet.");
+        require(balance >= players[msg.sender].nen * (ticketCost / startNen), "The Coliseum is out of money for now.");
+        (bool success,) = msg.sender.call{value : players[msg.sender].nen * (ticketCost / startNen)}("Enjoy your rewards!");
         require(success, "withdraw failed");
     }
 

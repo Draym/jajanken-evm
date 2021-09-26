@@ -13,6 +13,10 @@ contract JaJankenColiseum is JaJankenGame {
 
     address public queued;
 
+    event PlayerJoin(
+        address indexed p
+    );
+
     receive() external payable {
     }
 
@@ -30,6 +34,7 @@ contract JaJankenColiseum is JaJankenGame {
             players[msg.sender].chi = startTechniques;
             balance += ticketCost;
             fees += ticketCost * entranceFee / 100;
+            emit PlayerJoin({p: msg.sender});
         } else {
             sink += msg.value;
         }

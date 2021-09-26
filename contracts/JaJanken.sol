@@ -35,22 +35,22 @@ interface JaJanken {
 
     event MatchStart(
         address matchId,
-        address p1,
-        address p2
+        address indexed p1,
+        address indexed p2
     );
 
     event MatchPlayed(
-        address matchId // p1
+        address indexed matchId // p1
     );
 
     event MatchEnd(
-        address p1,
-        address p2,
+        address indexed p1,
+        address indexed p2,
         address winner
     );
 
     event WithdrawRewards(
-        address player,
+        address indexed player,
         uint256 amount
     );
 

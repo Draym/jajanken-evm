@@ -48,6 +48,7 @@ contract JaJankenColiseum is JaJankenGame {
             queued = msg.sender;
         } else {
             matches[queued].p2 = msg.sender;
+            players[queued].inMatch = 1;
             players[msg.sender].inMatch = 1;
             emit MatchStart(queued, queued, msg.sender);
             queued = address(0);

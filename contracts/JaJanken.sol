@@ -86,6 +86,14 @@ interface JaJanken {
     function revealMatch(Technique _action, bytes32 _revealKey, address _matchId) external;
 
     /**
+     * The player decide to forfeit and quit the specified match
+     * No card will be used from either players
+     * -> Should emit a MatchEnd event
+     */
+    function forfeitMatch(address _matchId) external;
+
+
+    /**
      * Withdraw gains from the Game
      * send rewards to the the players if he meets the withdrawal conditions, do nothing otherwise
      */

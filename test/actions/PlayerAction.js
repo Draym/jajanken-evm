@@ -42,4 +42,8 @@ module.exports = class PlayerAction {
             assert.equal(match.p2, Utils.nullAddress())
         }
     }
+
+    static async forfeit(setup, _playerAddress, _matchId) {
+        await setup.game.forfeitMatch(_matchId, {from: _playerAddress})
+    }
 }

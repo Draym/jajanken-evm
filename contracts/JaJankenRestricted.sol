@@ -40,6 +40,10 @@ contract JaJankenRestricted is JaJankenGame {
         // TODO
     }
 
+    function forfeitMatch(address _matchId) external override(JaJanken) {
+        // TODO
+    }
+
     function isGameFull() private view returns (bool isFull) {
         return countPlayers == maxNbPlayerPerGame;
     }

@@ -34,7 +34,7 @@ contract JaJankenColiseum is JaJankenGame {
             players[msg.sender].chi = startTechniques;
             balance += ticketCost;
             fees += ticketCost * entranceFee / 100;
-            emit PlayerJoin({p: msg.sender});
+            emit PlayerJoin({p : msg.sender});
         } else {
             sink += msg.value;
         }
@@ -67,6 +67,26 @@ contract JaJankenColiseum is JaJankenGame {
             emit MatchPlayed(_matchId);
         }
         matches[_matchId].playTime = block.timestamp;
+    }
+
+    function forfeitMatch(address _matchId) external override(JaJanken) {
+        address _p2;
+
+        if (msg.sender == _matchId) {
+            _p2 = matches[_matchId].p2;
+        } else if (msg.sender == matches[_matchId].p2) {
+            _p2 = _matchId;
+        } else {
+            revert("You do not belong to this match.");
+        }
+
+        --players[msg.sender].nen;
+        ++players[_p2].nen;
+        players[msg.sender].inMatch = 0;
+        players[_p2].inMatch = 0;
+        Match memory newMatch;
+        matches[_matchId] = newMatch;
+        emit MatchEnd({p1 : msg.sender, p2 : _p2, winner : _p2});
     }
 
     function encodeAction(address _yourAddress, Technique _action, bytes32 _revealKey) external pure returns (bytes32) {
@@ -103,25 +123,25 @@ contract JaJankenColiseum is JaJankenGame {
             ++players[_p2].nen;
             --players[_p1].nen;
             useTechnique(_p2, _p2t);
-            emit MatchEnd(_p1, _p2, _p2);
+            emit MatchEnd({p1 : _p1, p2 : _p2, winner : _p2});
         }
         else if (!canUseTechnique(_p2, _p2t)) {
             ++players[_p1].nen;
             --players[_p2].nen;
             useTechnique(_p1, _p1t);
-            emit MatchEnd(_p1, _p2, _p1);
+            emit MatchEnd({p1 : _p1, p2 : _p2, winner : _p1});
         } else {
             if (_p1t == _p2t) {
                 //draw
-                emit MatchEnd(_p1, _p2, _p1);
+                emit MatchEnd({p1 : _p1, p2 : _p2, winner : _p1});
             } else if (techniques[_p1t] == _p2t) {
                 ++players[_p1].nen;
                 --players[_p2].nen;
-                emit MatchEnd(_p1, _p2, _p1);
+                emit MatchEnd({p1 : _p1, p2 : _p2, winner : _p1});
             } else {
                 ++players[_p2].nen;
                 --players[_p1].nen;
-                emit MatchEnd(_p1, _p2, _p2);
+                emit MatchEnd({p1 : _p1, p2 : _p2, winner : _p2});
             }
             useTechnique(_p1, _p1t);
             useTechnique(_p2, _p2t);
@@ -164,11 +184,11 @@ contract JaJankenColiseum is JaJankenGame {
             if (msg.sender == _matchId) {
                 ++players[msg.sender].nen;
                 --players[matches[_matchId].p2].nen;
-                emit MatchEnd(msg.sender, matches[_matchId].p2, msg.sender);
+                emit MatchEnd({p1 : msg.sender, p2 : matches[_matchId].p2, winner : msg.sender});
             } else {
                 ++players[msg.sender].nen;
                 --players[_matchId].nen;
-                emit MatchEnd(msg.sender, _matchId, msg.sender);
+                emit MatchEnd({p1 : msg.sender, p2 : _matchId, winner : msg.sender});
             }
         }
     }
@@ -178,11 +198,11 @@ contract JaJankenColiseum is JaJankenGame {
             if (msg.sender == _matchId) {
                 ++players[msg.sender].nen;
                 --players[matches[_matchId].p2].nen;
-                emit MatchEnd(msg.sender, matches[_matchId].p2, msg.sender);
+                emit MatchEnd({p1 : msg.sender, p2 : matches[_matchId].p2, winner : msg.sender});
             } else {
                 ++players[msg.sender].nen;
                 --players[_matchId].nen;
-                emit MatchEnd(msg.sender, _matchId, msg.sender);
+                emit MatchEnd({p1 : msg.sender, p2 : _matchId, winner : msg.sender});
             }
         }
     }

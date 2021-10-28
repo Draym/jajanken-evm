@@ -49,8 +49,8 @@ contract('JaJankenColiseum', ([owner, player1Address, player2Address]) => {
             it('players join game', async () => {
                 await PlayerAction.joinGame(setup, player1Address, 1)
                 await PlayerAction.joinGame(setup, player2Address, 2)
-                await TestVerify.verifyPlayerProfile(setup, player1Address, 3, 4,4,4)
-                await TestVerify.verifyPlayerProfile(setup, player2Address, 3, 4,4,4)
+                await TestVerify.verifyPlayerProfile(setup, player1Address, 3, 4, 4, 4)
+                await TestVerify.verifyPlayerProfile(setup, player2Address, 3, 4, 4, 4)
             })
             it('players join match', async () => {
                 await PlayerAction.joinGame(setup, player1Address, 1)
@@ -108,6 +108,53 @@ contract('JaJankenColiseum', ([owner, player1Address, player2Address]) => {
 
             /** P1 GameOver **/
             await truffleAssert.reverts(PlayerAction.joinMatch(setup, player1Address, 1), "You do not have enough Nen to start a match.")
+        })
+    })
+
+    describe('Player can forfeit', async () => {
+        beforeEach(async () => {
+            console.log("--# new Game #--")
+            await PlayerAction.joinGame(setup, player1Address, 1)
+            await PlayerAction.joinGame(setup, player2Address, 2)
+        })
+
+        it('forfeit directly', async () => {
+            const matchId = player1Address
+            /** Join Match **/
+            await PlayerAction.joinMatch(setup, player1Address, 1)
+            await PlayerAction.joinMatch(setup, player2Address, 2)
+            const match = await coliseum.matches(matchId)
+            assert.equal(match.p2, player2Address)
+
+            /** Forfeit Play **/
+            await PlayerAction.forfeit(setup, player1Address, matchId)
+
+            await TestVerify.verifyPlayerState(setup, player1Address, 2, 12)
+            await TestVerify.verifyPlayerState(setup, player2Address, 4, 12)
+
+            const matchFinal = await coliseum.matches(matchId)
+            assert.equal(matchFinal.p2, Utils.nullAddress())
+        })
+
+        it('forfeit after commit', async () => {
+            const matchId = player1Address
+            /** Join Match **/
+            await PlayerAction.joinMatch(setup, player1Address, 1)
+            await PlayerAction.joinMatch(setup, player2Address, 2)
+            const match = await coliseum.matches(matchId)
+            assert.equal(match.p2, player2Address)
+
+            /** Commit Play **/
+            await PlayerAction.commitPlay(setup, 1, player1Address, matchId, true)
+
+            /** Forfeit Play **/
+            await PlayerAction.forfeit(setup, player2Address, matchId)
+
+            await TestVerify.verifyPlayerState(setup, player1Address, 4, 12)
+            await TestVerify.verifyPlayerState(setup, player2Address, 2, 12)
+
+            const matchFinal = await coliseum.matches(matchId)
+            assert.equal(matchFinal.p2, Utils.nullAddress())
         })
     })
 

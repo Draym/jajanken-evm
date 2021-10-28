@@ -49,6 +49,8 @@ contract('JaJankenColiseum', ([owner, player1Address, player2Address]) => {
             it('players join game', async () => {
                 await PlayerAction.joinGame(setup, player1Address, 1)
                 await PlayerAction.joinGame(setup, player2Address, 2)
+                await TestVerify.verifyPlayerProfile(setup, player1Address, 3, 4,4,4)
+                await TestVerify.verifyPlayerProfile(setup, player2Address, 3, 4,4,4)
             })
             it('players join match', async () => {
                 await PlayerAction.joinGame(setup, player1Address, 1)

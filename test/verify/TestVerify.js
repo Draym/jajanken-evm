@@ -13,4 +13,12 @@ module.exports = class TestVerify {
         assert.equal(player[0].toString(), _nen.toString(), "incorrect nen");
         assert.equal(player[1].toString(), _cards.toString(), "incorrect cards");
     }
+
+    static async verifyPlayerProfile(setup, _address, _nen, _guu, _paa, _chi) {
+        const player = await setup.game.getProfile({from: _address});
+        assert.equal(player[1].toString(), _guu.toString(), "incorrect guu");
+        assert.equal(player[2].toString(), _paa.toString(), "incorrect paa");
+        assert.equal(player[3].toString(), _chi.toString(), "incorrect chi");
+        assert.equal(player[4].toString(), _nen.toString(), "incorrect nen");
+    }
 }

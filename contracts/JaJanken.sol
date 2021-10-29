@@ -12,11 +12,11 @@ interface JaJanken {
     }
 
     struct Player {
-        uint8 inMatch;
         uint8 guu;
         uint8 paa;
         uint8 chi;
         uint32 nen;
+        address inMatch;
     }
 
     struct Opponent {

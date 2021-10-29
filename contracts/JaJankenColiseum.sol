@@ -42,7 +42,7 @@ contract JaJankenColiseum is JaJankenGame {
 
     function joinMatch() external override(JaJanken) {
         require(queued != msg.sender, "You are already in the queue.");
-        require(players[msg.sender].inMatch == 0, "You are already in a match.");
+        require(players[msg.sender].inMatch == address(0), "You are already in a match.");
         require(players[msg.sender].nen > 0, "You do not have enough Nen to start a match.");
         if (queued == address(0)) {
             queued = msg.sender;

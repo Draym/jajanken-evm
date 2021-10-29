@@ -46,6 +46,8 @@ interface JaJanken {
     event MatchEnd(
         address indexed p1,
         address indexed p2,
+        Technique p1Played,
+        Technique p2Played,
         address winner
     );
 

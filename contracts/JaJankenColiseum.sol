@@ -89,10 +89,6 @@ contract JaJankenColiseum is JaJankenGame {
         emit MatchEnd({p1 : msg.sender, p2 : _p2, winner : _p2});
     }
 
-    function encodeAction(address _yourAddress, Technique _action, bytes32 _revealKey) external pure returns (bytes32) {
-        return keccak256(abi.encodePacked(_yourAddress, _action, _revealKey));
-    }
-
     function revealMatch(Technique _action, bytes32 _revealKey, address _matchId) external override(JaJanken) {
         Match memory _match = matches[_matchId];
 

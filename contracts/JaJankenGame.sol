@@ -60,6 +60,10 @@ abstract contract JaJankenGame is JaJanken {
         return ticketCost + (ticketCost * entranceFee / 100);
     }
 
+    function encodeAction(address _yourAddress, Technique _action, bytes32 _revealKey) external pure override(JaJanken) returns (bytes32) {
+        return keccak256(abi.encodePacked(_yourAddress, _action, _revealKey));
+    }
+
     function getProfile() external view override(JaJanken) returns (Player memory) {
         return players[msg.sender];
     }

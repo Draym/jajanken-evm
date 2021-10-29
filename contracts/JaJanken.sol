@@ -72,6 +72,12 @@ interface JaJanken {
     function joinMatch() external;
 
     /**
+     * Encode the specified technique
+     * Should be used to generate a hashed value in order to commit secretly the player action for playMatch
+     */
+    function encodeAction(address _yourAddress, Technique _action, bytes32 _revealKey) external pure returns (bytes32);
+
+    /**
      * Commit the player's action for his current match
      * The action(Technique) must be hashed with a bytes32 key. so it can be saved with his hidden form.
      * -> Should emit a MatchPlayed event when the last player of the Match commit his play

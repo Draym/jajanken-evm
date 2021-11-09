@@ -9,8 +9,8 @@ module.exports = class GameAction {
         await PlayerAction.joinMatch(setup, _p2Address, 2)
         await PlayerAction.commitPlay(setup, _p1Action, _p1Address, _matchId, true)
         await PlayerAction.commitPlay(setup, _p2Action, _p2Address, _matchId, false)
-        await PlayerAction.revealPlay(setup, _p1Action, _p1Address, _matchId, true)
-        await PlayerAction.revealPlay(setup, _p2Action, _p2Address, _matchId, false)
+        await PlayerAction.revealPlay(setup, _p1Action, _p1Address, _matchId, true, false)
+        await PlayerAction.revealPlay(setup, _p2Action, _p2Address, _matchId, false, true)
         const match = await setup.game.matches(_matchId)
         assert.equal(match.p2, Utils.nullAddress())
     }

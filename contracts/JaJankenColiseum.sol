@@ -92,22 +92,19 @@ contract JaJankenColiseum is JaJankenGame {
     function revealMatch(Technique _action, bytes32 _revealKey, address _matchId) external override(JaJanken) {
         Match memory _match = matches[_matchId];
 
-        if (msg.sender == _matchId)
-        {
+        if (msg.sender == _matchId) {
             require(this.encodeAction(msg.sender, _action, _revealKey) == _match.p1Hidden, "invalid action");
-            if (_match.pPlayed != Technique.None) {
-                executeMatch(_matchId, _match.p2, _action, _match.pPlayed);
-            } else {
-                matches[_matchId].pPlayed = _action;
-                matches[_matchId].revealTime = block.timestamp;
+            matches[_matchId].p1Revealed = _action;
+            matches[_matchId].revealTime = block.timestamp;
+            if (_match.p2Revealed != Technique.None) {
+                executeMatch(_matchId, _match.p2, _action, _match.p2Revealed);
             }
         } else if (msg.sender == _match.p2) {
             require(this.encodeAction(msg.sender, _action, _revealKey) == _match.p2Hidden, "invalid action");
-            if (_match.pPlayed != Technique.None) {
-                executeMatch(_matchId, _match.p2, _match.pPlayed, _action);
-            } else {
-                matches[_matchId].pPlayed = _action;
-                matches[_matchId].revealTime = block.timestamp;
+            matches[_matchId].p2Revealed = _action;
+            matches[_matchId].revealTime = block.timestamp;
+            if (_match.p1Revealed != Technique.None) {
+                executeMatch(_matchId, _match.p2, _match.p1Revealed, _action);
             }
         } else {
             revert("You do not belong to this match.");

@@ -79,12 +79,12 @@ contract('JaJankenColiseum', ([owner, player1Address, player2Address]) => {
             assert.equal(match.p2, player2Address)
 
             /** Commit Play **/
-            await PlayerAction.commitPlay(setup, 1, player1Address, matchId, true)
-            await PlayerAction.commitPlay(setup, 2, player2Address, matchId, false)
+            await PlayerAction.commitPlay(setup, 1, player1Address, matchId, true, false)
+            await PlayerAction.commitPlay(setup, 2, player2Address, matchId, false, true)
 
             /** Reveal Play **/
-            await PlayerAction.revealPlay(setup, 1, player1Address, matchId, true)
-            await PlayerAction.revealPlay(setup, 2, player2Address, matchId, false)
+            await PlayerAction.revealPlay(setup, 2, player2Address, matchId, false, false)
+            await PlayerAction.revealPlay(setup, 1, player1Address, matchId, true, true)
 
             await TestVerify.verifyPlayerState(setup, player1Address, 2, 11)
             await TestVerify.verifyPlayerState(setup, player2Address, 4, 11)

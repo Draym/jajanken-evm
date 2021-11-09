@@ -28,7 +28,8 @@ interface JaJanken {
         address p2;
         bytes32 p1Hidden;
         bytes32 p2Hidden;
-        Technique pPlayed;
+        Technique p1Revealed;
+        Technique p2Revealed;
         uint256 playTime;
         uint256 revealTime;
     }

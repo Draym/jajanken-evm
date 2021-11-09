@@ -4,6 +4,7 @@
   "description": "Jajanken game based SmartContracts",
   "author": "kevin.andres@epitech.eu",
   "dependencies": {
+    "@truffle/hdwallet-provider": "^1.6.0",
     "babel-polyfill": "6.26.0",
     "babel-register": "6.26.0",
     "truffle": "5.4.10"

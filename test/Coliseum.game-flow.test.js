@@ -90,6 +90,26 @@ contract('JaJankenColiseum', ([owner, player1Address, player2Address]) => {
             await TestVerify.verifyPlayerState(setup, player2Address, 4, 11)
         })
 
+        it('players play draw', async () => {
+            const matchId = player1Address
+            /** Join Match **/
+            await PlayerAction.joinMatch(setup, player1Address, 1)
+            await PlayerAction.joinMatch(setup, player2Address, 2)
+            const match = await coliseum.matches(matchId)
+            assert.equal(match.p2, player2Address)
+
+            /** Commit Play **/
+            await PlayerAction.commitPlay(setup, 1, player1Address, matchId, true, false)
+            await PlayerAction.commitPlay(setup, 1, player2Address, matchId, false, true)
+
+            /** Reveal Play **/
+            await PlayerAction.revealPlay(setup, 1, player2Address, matchId, false, false)
+            await PlayerAction.revealPlay(setup, 1, player1Address, matchId, true, true)
+
+            await TestVerify.verifyPlayerState(setup, player1Address, 3, 11)
+            await TestVerify.verifyPlayerState(setup, player2Address, 3, 11)
+        })
+
         it('players play until P1 gameover', async () => {
             /** Turn 1 **/
             await GameAction.playTurn(setup, player1Address, 1, player2Address, 2)

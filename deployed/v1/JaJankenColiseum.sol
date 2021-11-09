@@ -126,7 +126,7 @@ contract JaJankenColiseum is JaJankenGame {
         } else {
             if (_p1t == _p2t) {
                 //draw
-                emit MatchEnd({p1 : _p1, p2 : _p2, p1Played : _p1t, p2Played : _p2t, winner : _p1});
+                emit MatchEnd({p1 : _p1, p2 : _p2, p1Played : _p1t, p2Played : _p2t, winner : address(0)});
             } else if (techniques[_p1t] == _p2t) {
                 ++players[_p1].nen;
                 --players[_p2].nen;

@@ -21,8 +21,8 @@
 const HDWalletProvider = require('@truffle/hdwallet-provider');
 // const infuraKey = "fj4jll3k.....";
 //
-const fs = require('fs');
-const mnemonic = fs.readFileSync(".secret").toString().trim();
+//const fs = require('fs');
+const accounts = require("./.secret.json")
 
 module.exports = {
     /**
@@ -47,22 +47,39 @@ module.exports = {
             port: 7545,            // Standard Ethereum port (default: none)
             network_id: "*",       // Any network (default: none)
         },
-        testnet: {
-            provider: () => new HDWalletProvider(mnemonic, `https://data-seed-prebsc-1-s1.binance.org:8545`),
+        rinkebyTestnet: {
+            provider: () => new HDWalletProvider(accounts.test, `wss://rinkeby.infura.io/ws/v3/b874d57d5dfc4c5ca56b85f7a2850abe`),
+            network_id: 4,
+            confirmations: 10,
+            timeoutBlocks: 2000,
+            networkCheckTimeout: 1000000,
+            skipDryRun: true
+        },
+        kovanTestnet: {
+            provider: () => new HDWalletProvider(accounts.test, `wss://kovan.infura.io/ws/v3/b874d57d5dfc4c5ca56b85f7a2850abe`),
+            network_id: 42,
+            confirmations: 10,
+            timeoutBlocks: 2000,
+            networkCheckTimeout: 1000000,
+            skipDryRun: true
+        },
+        bscTestnet: {
+            provider: () => new HDWalletProvider(accounts.test, `https://data-seed-prebsc-1-s1.binance.org:8545`),
             network_id: 97,
             confirmations: 10,
-            timeoutBlocks: 200,
+            timeoutBlocks: 2000,
+            networkCheckTimeout: 1000000,
             skipDryRun: true
         },
         bsc1: {
-            provider: () => new HDWalletProvider(mnemonic, `https://bsc-dataseed1.binance.org`),
+            provider: () => new HDWalletProvider(accounts.all, `https://bsc-dataseed1.binance.org`),
             network_id: 56,
             confirmations: 10,
             timeoutBlocks: 200,
             skipDryRun: true
         },
         bsc3: {
-            provider: () => new HDWalletProvider(mnemonic, `https://bsc-dataseed3.binance.org`),
+            provider: () => new HDWalletProvider(accounts.all, `https://bsc-dataseed3.binance.org`),
             network_id: 56,
             confirmations: 10,
             timeoutBlocks: 200,

@@ -7,7 +7,7 @@
 
 # testing
 /coverage
-.secret
+.secret.json
 
 # production
 /build

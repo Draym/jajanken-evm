@@ -68,7 +68,7 @@ module.exports = {
             network_id: 97,
             confirmations: 10,
             timeoutBlocks: 2000,
-            networkCheckTimeout: 1000000,
+            networkCheckTimeout: 1000000000,
             skipDryRun: true
         },
         bsc1: {

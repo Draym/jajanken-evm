@@ -8,5 +8,5 @@ evm: byzantium
 
 Coliseum contract address:
 
-- Rinkeby: 0x093c948d551aace5ddced881dbadb3690a2da39ed3d19167a150f85fa9e65c93
+- Rinkeby: 0x45a0F6EF209945a5eaA853B250f3F58C3AF26D97
 

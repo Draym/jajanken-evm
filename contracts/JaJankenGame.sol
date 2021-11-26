@@ -101,8 +101,10 @@ abstract contract JaJankenGame is JaJanken {
      * only available for game owner
      */
     function withdrawFees() external onlyOwner {
-        (bool success,) = msg.sender.call{value : fees}("withdraw fees");
-        require(success, "withdraw failed");
+        uint amount = fees;
+        fees = 0;
+        (bool success,) = msg.sender.call{value : amount}("withdraw fees");
+        require(success, "withdraw Fees failed");
     }
 
     /**
@@ -110,8 +112,10 @@ abstract contract JaJankenGame is JaJanken {
      * only available for game owner
      */
     function cleanupSink() external onlyOwner {
-        (bool success,) = msg.sender.call{value : sink}("cleanup sink");
-        require(success, "withdraw failed");
+        uint amount = sink;
+        sink = 0;
+        (bool success,) = msg.sender.call{value : amount}("cleanup sink");
+        require(success, "withdraw Sink failed");
     }
 
     function canUseTechnique(address _p, Technique _technique) internal view returns (bool) {

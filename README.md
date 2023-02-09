@@ -5,4 +5,5 @@
 
 ### Web Game
 [WebGame prototype GIT](https://github.com/Draym/jajanken-coliseum)
+
 [WebGame prototype LIVE HERE](https://draym.github.io/jajanken-coliseum/)

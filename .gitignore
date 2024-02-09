@@ -5,8 +5,7 @@
 /.pnp
 .pnp.js
 
-# testing
-/coverage
+# secrets
 .secret.json
 
 # production
@@ -26,3 +25,16 @@ yarn-error.log*
 
 #IDEA
 .idea
+node_modules
+
+# Hardhat files
+/cache
+/artifacts
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json

@@ -1,8 +1,8 @@
-const TestVerify = require("./verify/TestVerify.js");
-const PlayerAction = require("./actions/PlayerAction.js");
+const TestVerify = require("./utils/verify/TestVerify.js");
+const PlayerAction = require("./utils/actions/PlayerAction.js");
 const GameSetup = require("./data/GameSetup.js");
-const Utils = require("./Utils.js");
-const GameAction = require("./actions/GameAction");
+const Utils = require("./utils/Utils.js");
+const GameAction = require("./utils/actions/GameAction");
 const JaJankenColiseum = artifacts.require('JaJankenColiseum')
 
 require('chai')
@@ -10,6 +10,30 @@ require('chai')
     .should()
 
 const truffleAssert = require('truffle-assertions');
+const {ethers} = require("hardhat");
+
+describe("JaJankenGame", function () {
+    async function deployGame() {
+        // Contracts are deployed using the first signer/account by default
+        const [owner, otherAccount] = await ethers.getSigners()
+
+        const Lock = await ethers.getContractFactory("Lock")
+        const lock = await Lock.deploy(
+            '0x5d097492e2FB156696Ad1f16cB5C478cFcAEBAEB',
+            3000000000000000,
+            10,
+            3,
+            3,
+            3
+        )
+
+        return {lock, unlockTime, lockedAmount, owner, otherAccount}
+    }
+
+    it("playTurn", async function () {
+
+    })
+})
 
 contract('JaJankenColiseum', ([owner, player1Address, player2Address]) => {
     let coliseum

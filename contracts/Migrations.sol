@@ -1,10 +1,11 @@
 pragma solidity ^0.7.4;
 
+// SPDX-License-Identifier: GLWTPL
 contract Migrations {
     address public owner;
     uint public last_completed_migration;
 
-    constructor() public {
+    constructor() {
         owner = msg.sender;
     }
 

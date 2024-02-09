@@ -6,22 +6,16 @@ interface JaJanken {
 
     enum Technique {
         None,
-        Guu,
-        Paa,
-        Chi
+        Red,
+        Green,
+        Blue
     }
 
     struct Player {
-        uint8 guu;
-        uint8 paa;
-        uint8 chi;
-        uint32 nen;
-        address inMatch;
-    }
-
-    struct Opponent {
-        uint32 nen;
-        uint8 techniques;
+        uint8 red;
+        uint8 green;
+        uint8 blue;
+        uint32 soul;
     }
 
     struct Match {
@@ -34,10 +28,8 @@ interface JaJanken {
         uint256 revealTime;
     }
 
-    event MatchStart(
-        address matchId,
-        address indexed p1,
-        address indexed p2
+    event PlayerJoin(
+        address indexed p
     );
 
     event MatchPlayed(
@@ -57,6 +49,11 @@ interface JaJanken {
         uint256 amount
     );
 
+    /**
+     * Update the entrance fee for the game
+     */
+    function updateEntranceFee(uint8 _entranceFee) external;
+
     /*
      * Return the required fee in Wei to pay to receive the game starter pack
      * /!\ depending on implementation, the pack may be given only if the value is enough to buy the entrance ticket
@@ -69,12 +66,6 @@ interface JaJanken {
     function joinGame() external payable;
 
     /**
-     * Join a queue in order to find an opponent to fight against
-     * -> Should emit a StartMatch event when an opponent is found
-     */
-    function joinMatch() external;
-
-    /**
      * Encode the specified technique
      * Should be used to generate a hashed value in order to commit secretly the player action for playMatch
      */
@@ -85,22 +76,14 @@ interface JaJanken {
      * The action(Technique) must be hashed with a bytes32 key. so it can be saved with his hidden form.
      * -> Should emit a MatchPlayed event when the last player of the Match commit his play
      */
-    function playMatch(bytes32 _commitment, address _matchId) external;
+    function playMatch(bytes32 _commitment, address _p1, address _p2, bytes memory _matchSig) external;
 
     /**
      * Reveal the player's action for his current match
-     * It is required to send the player's action with the key used to hash it previously for platMatch method
+     * It is required to send the player's action with the key used to hash it previously for playMatch method
      * -> Should emit a MatchEnd event when the last player of the Match reveal his play
      */
-    function revealMatch(Technique _action, bytes32 _revealKey, address _matchId) external;
-
-    /**
-     * The player decide to forfeit and quit the specified match
-     * No card will be used from either players
-     * -> Should emit a MatchEnd event
-     */
-    function forfeitMatch(address _matchId) external;
-
+    function revealMatch(Technique _action, bytes32 _revealKey, address _p1, address _p2, bytes memory _matchSig) external;
 
     /**
      * Withdraw gains from the Game
@@ -138,22 +121,18 @@ interface JaJanken {
     /**
      * Get the player profile stat for the current Game
      */
-    function getPlayer(address _player) external view returns (Opponent memory);
+    function getPlayer(address _player) external view returns (Player memory);
 
     /**
-     * Get the number of player alive in the game
+     * Get the number of Red from alive players
      */
-    function getTotalPlayers() external view returns (uint);
+    function getTotalRed() external view returns (uint);
     /**
-     * Get the number of Guu from alive players
+     * Get the number of Green from alive players
      */
-    function getTotalGuu() external view returns (uint);
+    function getTotalGreen() external view returns (uint);
     /**
-     * Get the number of Paa from alive players
+     * Get the number of Blue from alive players
      */
-    function getTotalPaa() external view returns (uint);
-    /**
-     * Get the number of Chi from alive players
-     */
-    function getTotalChi() external view returns (uint);
+    function getTotalBlue() external view returns (uint);
 }

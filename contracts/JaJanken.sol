@@ -58,7 +58,7 @@ interface JaJanken {
      * Return the required fee in Wei to pay to receive the game starter pack
      * /!\ depending on implementation, the pack may be given only if the value is enough to buy the entrance ticket
      */
-    function entranceTicketFee() external view returns (uint256);
+    function entranceTicketCost() external view returns (uint256);
 
     /**
      * Join a game, the caller must pay the required entrance ticket amount in ETH
@@ -123,6 +123,10 @@ interface JaJanken {
      */
     function getPlayer(address _player) external view returns (Player memory);
 
+    /**
+     * Get the number of Soul from alive players
+     */
+    function getTotalSoul() external view returns (uint);
     /**
      * Get the number of Red from alive players
      */

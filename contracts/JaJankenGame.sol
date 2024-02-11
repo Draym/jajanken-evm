@@ -13,14 +13,12 @@ contract JaJankenGame is JaJanken, SignerGuardian {
     mapping(address => Match) public matches;
     mapping(Technique => Technique) internal techniques;
 
-    uint256 public balance;
-    uint256 public sink;
-    uint256 public fees;
-
+    uint256 public totalSoul;
     uint256 public totalRed;
     uint256 public totalGreen;
     uint256 public totalBlue;
 
+    uint256 internal immutable soulCost;
     uint256 internal immutable ticketCost;
     uint256 internal ticketFee;
     uint8 internal entranceFee;
@@ -31,7 +29,7 @@ contract JaJankenGame is JaJanken, SignerGuardian {
     constructor(
         string memory _name,
         address _signer,
-        uint256 _ticketCost,
+        uint256 _soulCost,
         uint8 _entranceFee,
         uint8 _minimumSoulToEarn,
         uint8 _startSoul,
@@ -46,8 +44,9 @@ contract JaJankenGame is JaJanken, SignerGuardian {
         startSoul = _startSoul;
         startTechniques = _startTechniques;
         minimumSoulToEarn = _minimumSoulToEarn;
-        ticketCost = _ticketCost;
-        ticketFee = _ticketCost * _entranceFee / 100;
+        soulCost = _soulCost;
+        ticketCost = _soulCost * _startSoul;
+        ticketFee = (_soulCost * _startSoul) * _entranceFee / 100;
     }
 
     receive() external payable {
@@ -60,10 +59,10 @@ contract JaJankenGame is JaJanken, SignerGuardian {
 
     function updateEntranceFee(uint8 _entranceFee) external override(JaJanken) onlyOwner {
         entranceFee = _entranceFee;
-        ticketFee = ticketCost * entranceFee / 100;
+        ticketFee = ticketCost * _entranceFee / 100;
     }
 
-    function entranceTicketFee() external view override(JaJanken) returns (uint256) {
+    function entranceTicketCost() external view override(JaJanken) returns (uint256) {
         return ticketCost + ticketFee;
     }
 
@@ -84,6 +83,10 @@ contract JaJankenGame is JaJanken, SignerGuardian {
         return players[_player];
     }
 
+    function getTotalSoul() external view override(JaJanken) returns (uint) {
+        return totalSoul;
+    }
+
     function getTotalRed() external view override(JaJanken) returns (uint) {
         return totalRed;
     }
@@ -97,25 +100,22 @@ contract JaJankenGame is JaJanken, SignerGuardian {
     }
 
     /**
-     * Withdraw fees earning from the Game
+     * Check if there is fund to withdraw
      * only available for game owner
      */
-    function withdrawFees() external onlyOwner {
-        uint amount = fees;
-        fees = 0;
-        (bool success,) = msg.sender.call{value: amount}("withdraw fees");
-        require(success, "withdraw Fees failed");
+    function hasFundToWithdraw() external view returns (uint256) {
+        return address(this).balance - (totalSoul * soulCost);
     }
 
     /**
-     * Cleanup sink
+     * Withdraw excess balance of funds
      * only available for game owner
      */
-    function cleanupSink() external onlyOwner {
-        uint amount = sink;
-        sink = 0;
-        (bool success,) = msg.sender.call{value: amount}("cleanup sink");
-        require(success, "withdraw Sink failed");
+    function withdrawExcessiveBalance(address payable _recipient) external onlyOwner {
+        uint amount = address(this).balance - (totalSoul * soulCost);
+        require(amount > 0, "nothing to withdraw");
+        (bool success,) = _recipient.call{value: amount}("");
+        require(success, "withdraw failed");
     }
 
     function canUseTechnique(address _p, Technique _technique) internal view returns (bool) {
@@ -152,30 +152,24 @@ contract JaJankenGame is JaJanken, SignerGuardian {
     }
 
     function joinGame() external payable override(JaJanken) {
-        uint256 payment = msg.value;
-        if (payment >= (ticketCost + ticketFee)) {
-            Player memory currentPlayer = players[msg.sender];
-            Player memory newPlayer = Player({
-                soul: startSoul + currentPlayer.soul,
-                red: startTechniques,
-                green: startTechniques,
-                blue: startTechniques
-            });
+        require(msg.value >= (ticketCost + ticketFee), "Not enough to join the game.");
+        Player memory currentPlayer = players[msg.sender];
+        Player memory newPlayer = Player({
+            soul: startSoul + currentPlayer.soul,
+            red: startTechniques,
+            green: startTechniques,
+            blue: startTechniques
+        });
 
-            if (startTechniques - currentPlayer.red > 0)
-                totalRed += (startTechniques - currentPlayer.red);
-            if (startTechniques - currentPlayer.green > 0)
-                totalGreen += (startTechniques - currentPlayer.green);
-            if (startTechniques - currentPlayer.blue > 0)
-                totalBlue += (startTechniques - currentPlayer.blue);
-
-            players[msg.sender] = newPlayer;
-            balance += ticketCost;
-            fees += payment - ticketCost;
-            emit PlayerJoin({p: msg.sender});
-        } else {
-            sink += payment;
-        }
+        if (startTechniques - currentPlayer.red > 0)
+            totalRed += (startTechniques - currentPlayer.red);
+        if (startTechniques - currentPlayer.green > 0)
+            totalGreen += (startTechniques - currentPlayer.green);
+        if (startTechniques - currentPlayer.blue > 0)
+            totalBlue += (startTechniques - currentPlayer.blue);
+        players[msg.sender] = newPlayer;
+        totalSoul += startSoul;
+        emit PlayerJoin({p: msg.sender});
     }
 
     function playMatch(bytes32 _commitment, address _p1, address _p2, bytes memory _matchSig) external override(JaJanken) {
@@ -230,10 +224,16 @@ contract JaJankenGame is JaJanken, SignerGuardian {
             } else if (techniques[_p1t] == _p2t) {
                 ++players[_p1].soul;
                 --players[_p2].soul;
+                if (players[_p2].soul == 0) {
+                    _resetPlayer(_p2);
+                }
                 emit MatchEnd({p1: _p1, p2: _p2, p1Played: _p1t, p2Played: _p2t, winner: _p1});
             } else {
                 ++players[_p2].soul;
                 --players[_p1].soul;
+                if (players[_p1].soul == 0) {
+                    _resetPlayer(_p1);
+                }
                 emit MatchEnd({p1: _p1, p2: _p2, p1Played: _p1t, p2Played: _p2t, winner: _p2});
             }
             useTechnique(_p1, _p1t);
@@ -304,6 +304,15 @@ contract JaJankenGame is JaJanken, SignerGuardian {
         }
     }
 
+    function _resetPlayer(address _p) internal {
+        Player memory _player = players[_p];
+        totalSoul -= _player.soul;
+        totalRed -= _player.red;
+        totalGreen -= _player.green;
+        totalBlue -= _player.blue;
+        players[_p] = Player({soul: 0, red: 0, green: 0, blue: 0});
+    }
+
     /**
      * Withdraw gains from the Game
      * only available at the end of the Game, do nothing otherwise
@@ -311,11 +320,12 @@ contract JaJankenGame is JaJanken, SignerGuardian {
     function withdrawGains() external override(JaJanken) {
         require(players[msg.sender].soul >= minimumSoulToEarn, "You did not meet the required Soul for leaving the Coliseum.");
         require(players[msg.sender].green == 0 && players[msg.sender].blue == 0 && players[msg.sender].red == 0, "You did not play all your cards yet.");
-        require(balance >= players[msg.sender].soul * (ticketCost / startSoul), "The Coliseum is out of money for now.");
         uint32 soul = players[msg.sender].soul;
-        players[msg.sender].soul = 0;
-        (bool success,) = msg.sender.call{value: soul * (ticketCost / startSoul)}("Enjoy your rewards!");
+        uint amount = soul * soulCost;
+        require(address(this).balance >= amount, "The Coliseum is out of money for now.");
+        _resetPlayer(msg.sender);
+        (bool success,) = msg.sender.call{value: amount}("Enjoy your rewards!");
         require(success, "withdraw failed");
-        emit WithdrawRewards({player: msg.sender, amount: soul * (ticketCost / startSoul)});
+        emit WithdrawRewards({player: msg.sender, amount: amount});
     }
 }

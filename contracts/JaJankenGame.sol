@@ -118,7 +118,7 @@ contract JaJankenGame is JaJanken, SignerGuardian {
         require(success, "withdraw failed");
     }
 
-    function canUseTechnique(address _p, Technique _technique) internal view returns (bool) {
+    function _canUseTechnique(address _p, Technique _technique) internal view returns (bool) {
         if (_technique == Technique.Red) {
             return players[_p].red > 0;
         }
@@ -133,7 +133,7 @@ contract JaJankenGame is JaJanken, SignerGuardian {
         }
     }
 
-    function useTechnique(address _p, Technique _technique) internal {
+    function _useTechnique(address _p, Technique _technique) internal {
         if (_technique == Technique.Red) {
             --players[_p].red;
             --totalRed;
@@ -194,29 +194,29 @@ contract JaJankenGame is JaJanken, SignerGuardian {
             matches[_p1].p1Revealed = _action;
             matches[_p1].revealTime = block.timestamp;
             if (_match.p2Revealed != Technique.None) {
-                executeMatch(_p1, _match.p2, _action, _match.p2Revealed);
+                _executeMatch(_p1, _match.p2, _action, _match.p2Revealed);
             }
         } else {
             require(this.encodeAction(msg.sender, _action, _revealKey) == _match.p2Hidden, "invalid action");
             matches[_p1].p2Revealed = _action;
             matches[_p1].revealTime = block.timestamp;
             if (_match.p1Revealed != Technique.None) {
-                executeMatch(_p1, _match.p2, _match.p1Revealed, _action);
+                _executeMatch(_p1, _match.p2, _match.p1Revealed, _action);
             }
         }
     }
 
-    function executeMatch(address _p1, address _p2, Technique _p1t, Technique _p2t) internal {
-        if (!canUseTechnique(_p1, _p1t)) {
+    function _executeMatch(address _p1, address _p2, Technique _p1t, Technique _p2t) internal {
+        if (!_canUseTechnique(_p1, _p1t)) {
             ++players[_p2].soul;
             --players[_p1].soul;
-            useTechnique(_p2, _p2t);
+            _useTechnique(_p2, _p2t);
             emit MatchEnd({p1: _p1, p2: _p2, p1Played: _p1t, p2Played: _p2t, winner: _p2});
         }
-        else if (!canUseTechnique(_p2, _p2t)) {
+        else if (!_canUseTechnique(_p2, _p2t)) {
             ++players[_p1].soul;
             --players[_p2].soul;
-            useTechnique(_p1, _p1t);
+            _useTechnique(_p1, _p1t);
             emit MatchEnd({p1: _p1, p2: _p2, p1Played: _p1t, p2Played: _p2t, winner: _p1});
         } else {
             if (_p1t == _p2t) { //draw
@@ -236,8 +236,8 @@ contract JaJankenGame is JaJanken, SignerGuardian {
                 }
                 emit MatchEnd({p1: _p1, p2: _p2, p1Played: _p1t, p2Played: _p2t, winner: _p2});
             }
-            useTechnique(_p1, _p1t);
-            useTechnique(_p2, _p2t);
+            _useTechnique(_p1, _p1t);
+            _useTechnique(_p2, _p2t);
         }
         Match memory newMatch;
         matches[_p1] = newMatch;

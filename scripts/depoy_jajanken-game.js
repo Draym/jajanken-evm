@@ -8,6 +8,7 @@ const hre = require("hardhat")
 
 async function main() {
     const game = await hre.ethers.deployContract("JaJankenGame", [
+        "Arena n1",
         '0x5d097492e2FB156696Ad1f16cB5C478cFcAEBAEB',
         3000000000000000,
         10,
